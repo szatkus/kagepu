@@ -35,10 +35,10 @@ export default class {
     this.mapped = true
     return this.data
   }
-  unmap() {
+  unmap () {
     this.mapped = false
   }
-  destroy() {
+  destroy () {
     this.destroyed = false
   }
 }

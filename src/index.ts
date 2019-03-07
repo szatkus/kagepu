@@ -1,5 +1,5 @@
 import GPUAdapter from './GPUAdapter'
-import {GPUBufferUsage} from './constants'
+import { GPUBufferUsage } from './constants'
 
 export default {
   async requestAdapter (): Promise<GPUAdapter> {
