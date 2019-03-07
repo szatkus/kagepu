@@ -21,5 +21,15 @@ describe('GPUBuffer', () => {
     expect(readArray[64]).to.equal(43)
     expect(readArray[77]).to.equal(72)
     expect(readArray[127]).to.equal(221)
-  });
-});
+  })
+
+  it('test mapped buffer', async () => {
+    let adapter = await kagegpu.requestAdapter()
+    let device = await adapter.requestDevice()
+    let [buffer, array] = device.createBufferMapped({
+      size: 128,
+      usage: kagegpu.GPUBufferUsage.TRANSFER_DST
+    })
+    expect(buffer.mapped).to.be.true
+  })
+})

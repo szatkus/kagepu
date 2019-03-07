@@ -6,10 +6,9 @@ export default class {
   usage: number
   mapped = false
   destroyed = false
-  constructor (descriptor: GPUBufferDescriptor, mapped: boolean) {
+  constructor (descriptor: GPUBufferDescriptor) {
     this.data = new ArrayBuffer(descriptor.size)
     this.usage = descriptor.usage
-    this.mapped = mapped
   }
   setSubData (offset: number, data: ArrayBuffer) {
     if (!(this.usage & GPUBufferUsage.TRANSFER_DST)) {

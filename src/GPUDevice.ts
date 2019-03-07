@@ -11,6 +11,11 @@ export default class {
     this.adapter = adapter
   }
   createBuffer(descriptor: GPUBufferDescriptor): GPUBuffer {
-    return new GPUBuffer(descriptor, false)
+    return new GPUBuffer(descriptor)
+  }
+  createBufferMapped(descriptor: GPUBufferDescriptor): [GPUBuffer, ArrayBuffer] {
+    let buffer = new GPUBuffer(descriptor)
+    buffer.mapped = true
+    return [buffer, buffer.data]
   }
 }
