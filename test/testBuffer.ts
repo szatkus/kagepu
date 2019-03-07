@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import 'mocha'
 
 describe('GPUBuffer', () => {
-  it('should return hello world', async () => {
+  it('test buffer operations', async () => {
     let adapter = await kagegpu.requestAdapter()
     let device = await adapter.requestDevice()
     let buffer = device.createBuffer({
