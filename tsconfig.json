@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "amd",
+    "lib": ["es5","es2015.promise"],
+    "outFile": "./kagegpu.js",
+    "strict": true,
+    "esModuleInterop": true,
+    "sourceRoot": "./src/",
+    "rootDir": "./src/",
+    "sourceMap": true
+  }
+}
