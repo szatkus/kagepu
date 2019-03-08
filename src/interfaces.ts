@@ -28,3 +28,17 @@ export interface GPUTextureViewDescriptor {
   baseArrayLayer: number,
   arrayLayerCount: number
 }
+
+export interface GPUSamplerDescriptor {
+  addressModeU: string,
+  addressModeV: string,
+  addressModeW: string,
+  magFilter: string,
+  minFilter: string,
+  mipmapFilter: string,
+  lodMinClamp: number,
+  lodMaxClamp: number,
+  maxAnisotropy: number,
+  compareFunction: string,
+  borderColor: string
+};

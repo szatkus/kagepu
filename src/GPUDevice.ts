@@ -1,8 +1,9 @@
 import GPUAdapter from './GPUAdapter'
 import { extensions, limits } from './constants'
-import { GPUBufferDescriptor, GPUTextureDescriptor } from './interfaces'
+import { GPUBufferDescriptor, GPUTextureDescriptor, GPUSamplerDescriptor } from './interfaces'
 import GPUBuffer from './GPUBuffer'
 import GPUTexture from './GPUTexture'
+import GPUSampler from './GPUSampler'
 
 export default class {
   extensions = extensions
@@ -24,5 +25,8 @@ export default class {
   }
   createTexture (descriptor: GPUTextureDescriptor): GPUTexture {
     return new GPUTexture()
+  }
+  createSampler (descriptor: GPUSamplerDescriptor): GPUSampler {
+    return new GPUSampler()
   }
 }
