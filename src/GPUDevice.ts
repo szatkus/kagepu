@@ -1,10 +1,11 @@
 import GPUAdapter from './GPUAdapter'
 import { extensions, limits } from './constants'
-import { GPUBufferDescriptor, GPUTextureDescriptor, GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor } from './interfaces'
+import { GPUBufferDescriptor, GPUTextureDescriptor, GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor } from './interfaces'
 import GPUBuffer from './GPUBuffer'
 import GPUTexture from './GPUTexture'
 import GPUSampler from './GPUSampler'
 import GPUBindGroupLayout from './GPUBindGroupLayout';
+import GPUShaderModule from './GPUShaderModule';
 
 export default class {
   extensions = extensions
@@ -32,5 +33,8 @@ export default class {
   }
   createBindGroupLayout(descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
     return new GPUBindGroupLayout()
+  }
+  createShaderModule(descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
+    return new GPUShaderModule()
   }
 }
