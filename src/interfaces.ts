@@ -41,4 +41,14 @@ export interface GPUSamplerDescriptor {
   maxAnisotropy: number,
   compareFunction: string,
   borderColor: string
-};
+}
+
+export interface GPUBindGroupLayoutBinding {
+  binding: number,
+  visibility: number,
+  type: string
+}
+
+export interface GPUBindGroupLayoutDescriptor {
+  bindings: Array<GPUBindGroupLayoutBinding>
+}

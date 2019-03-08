@@ -30,3 +30,10 @@ export const GPUTextureAspect = {
   DEPTH: 2,
   STENCIL: 4
 }
+
+export const GPUShaderStageBit = {
+  NONE: 0,
+  VERTEX: 1,
+  FRAGMENT: 2,
+  COMPUTE: 4
+}
