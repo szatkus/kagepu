@@ -1,3 +1,6 @@
+import GPUPipelineLayout from "./GPUPipelineLayout";
+import GPUShaderModule from "./GPUShaderModule";
+
 export interface GPUBufferDescriptor {
   size: number,
   usage: number
@@ -62,4 +65,43 @@ export interface GPUPipelineLayoutDescriptor {
 }
 
 export interface GPUBindGroupLayout {
+}
+
+export interface GPURenderPipelineDescriptor {
+  
+}
+
+export interface GPUPipelineDescriptorBase {
+  layout: GPUPipelineLayout 
+}
+
+export interface GPUPipelineStageDescriptor {
+  module: GPUShaderModule,
+  entryPoint: string
+}
+
+export interface GPURasterizationStateDescriptor {
+  frontFace: string,
+  cullMode: string,
+  depthBias: number,
+  depthBiasSlopeScale: number,
+  depthBiasClamp: number
+}
+
+export interface GPUColorStateDescriptor {
+  format: string,
+  alphaBlend: string,
+  colorBlend: string,
+  writeMask: string
+}
+
+export interface GPURenderPipelineDescriptor extends GPUPipelineDescriptorBase {
+  vertexStage: GPUPipelineStageDescriptor,
+  fragmentStage: GPUPipelineStageDescriptor,
+  primitiveTopology: string,
+  rasterizationState: GPURasterizationStateDescriptor,
+  colorStates: Array<GPUColorStateDescriptor>,
+  //GPUDepthStencilStateDescriptor? depthStencilState;
+  //GPUInputStateDescriptor inputState;
+  sampleCount: number
 }
