@@ -56,3 +56,10 @@ export interface GPUBindGroupLayoutDescriptor {
 export interface GPUShaderModuleDescriptor {
   code: ArrayBuffer|string
 }
+
+export interface GPUPipelineLayoutDescriptor {
+  bindGroupLayouts: Array<GPUBindGroupLayout>
+}
+
+export interface GPUBindGroupLayout {
+}
