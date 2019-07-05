@@ -1,5 +1,5 @@
 import GPUAdapter from './GPUAdapter'
-import { GPUBufferUsage } from './constants'
+import { GPUBufferUsage, GPUShaderStageBit, GPUColorWriteBits, GPUTextureUsage } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
 
 async function requestAdapter (): Promise<GPUAdapter> {
@@ -11,6 +11,9 @@ let gpu = {
   GPUBufferUsage,
   monkeyPatch () {
     (window as any).GPUBufferUsage = GPUBufferUsage;
+    (window as any).GPUShaderStageBit = GPUShaderStageBit;
+    (window as any).GPUColorWriteBits = GPUColorWriteBits;
+    (window as any).GPUTextureUsage = GPUTextureUsage;
     (window.navigator as any).gpu = gpu;
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
