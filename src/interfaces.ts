@@ -1,7 +1,16 @@
 import GPUPipelineLayout from "./GPUPipelineLayout";
 import GPUShaderModule from "./GPUShaderModule";
 
+export interface GPUObjectDescriptorBase {
+  label: string
+}
+
 export interface GPUBufferDescriptor {
+  size: number,
+  usage: number
+}
+
+export interface dupa {
   size: number,
   usage: number
 }
