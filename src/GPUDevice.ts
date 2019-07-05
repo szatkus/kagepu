@@ -11,6 +11,7 @@ import { GPURenderPipeline } from './GPURenderPipeline';
 import GPUCommandEncoder from './GPUCommandEncoder';
 import GPUBindGroup, { GPUBindGroupDescriptor } from './GPUBindGroup';
 import GPUQueue from './GPUQueue';
+import KQueue from './KQueue';
 
 export default class {
   extensions = extensions
@@ -59,6 +60,6 @@ export default class {
   }
 
   getQueue(): GPUQueue {
-    return new GPUQueue()
+    return new KQueue()
   }
 }

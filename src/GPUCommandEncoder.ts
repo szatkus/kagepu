@@ -53,7 +53,7 @@ interface KPUDrawStep {
     vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number
 }
 
-class GPURenderPassEncoder {
+export class GPURenderPassEncoder {
     private descriptor: GPURenderPassDescriptor
     private pipeline?: GPURenderPipeline
     private vertexBuffers: Array<GPUBuffer> = []
@@ -92,7 +92,7 @@ class GPURenderPassEncoder {
     }
 }
 
-class KCommandBuffer implements GPUCommandBuffer  {
+export class KCommandBuffer implements GPUCommandBuffer  {
     constructor(private renderPasses: Array<GPURenderPassEncoder>) {
 
     }

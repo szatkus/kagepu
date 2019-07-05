@@ -1,7 +1,5 @@
 export interface GPUCommandBuffer {}
 
-export default class GPUQueue {
-    submit(buffers: Array<GPUCommandBuffer>) {
-        console.debug(buffers)
-    }
+export default interface GPUQueue {
+    submit(buffers: Array<GPUCommandBuffer>): any
 }
