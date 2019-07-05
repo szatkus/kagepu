@@ -80,6 +80,10 @@ class GPUSwapChain {
 }
 
 export default class {
+    private context: CanvasRenderingContext2D
+    constructor(context: CanvasRenderingContext2D) {
+        this.context = context
+    }
     configureSwapChain (descriptor: GPUSwapChainDescriptor) : GPUSwapChain {
         return new GPUSwapChain(descriptor)
     }

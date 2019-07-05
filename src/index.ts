@@ -18,7 +18,8 @@ let gpu = {
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
       if (contextType == 'gpu') {
-        return new GPUCanvasContext()
+        let context = originalGetContext.apply(this, ['2d']) as CanvasRenderingContext2D
+        return new GPUCanvasContext(context)
       }
       return originalGetContext.apply(this, [contextType, contextAttributes]);
     }
