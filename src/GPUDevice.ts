@@ -8,6 +8,9 @@ import GPUBindGroupLayout from './GPUBindGroupLayout';
 import GPUShaderModule from './GPUShaderModule';
 import GPUPipelineLayout from './GPUPipelineLayout';
 import { GPURenderPipeline } from './GPURenderPipeline';
+import GPUCommandEncoder from './GPUCommandEncoder';
+import GPUBindGroup, { GPUBindGroupDescriptor } from './GPUBindGroup';
+import GPUQueue from './GPUQueue';
 
 export default class {
   extensions = extensions
@@ -44,5 +47,18 @@ export default class {
   }
   createRenderPipeline(descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     return new GPURenderPipeline()
+  }
+  createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
+    return new GPUBindGroup(descriptor)
+  }
+  createCommandEncoder(descriptor?: any): GPUCommandEncoder {
+    if (descriptor) {
+      throw new Error("not supported yet")
+    }
+    return new GPUCommandEncoder()
+  }
+
+  getQueue(): GPUQueue {
+    return new GPUQueue()
   }
 }

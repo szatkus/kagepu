@@ -1,5 +1,6 @@
 import GPUDevice from "./GPUDevice";
 import { GPUExtent3D, GPUObjectDescriptorBase } from "./interfaces";
+import GPUTexture from "./GPUTexture";
 
 export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
     device: GPUDevice,
@@ -69,12 +70,18 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
 }
 
 class GPUSwapChain {
-
+    private descriptor: GPUSwapChainDescriptor
+    constructor(descriptor: GPUSwapChainDescriptor) {
+        this.descriptor = descriptor
+    }
+    getCurrentTexture(): GPUTexture {
+        return new GPUTexture()
+    }
 }
 
 export default class {
     configureSwapChain (descriptor: GPUSwapChainDescriptor) : GPUSwapChain {
-        return new GPUSwapChain()
+        return new GPUSwapChain(descriptor)
     }
 }
   
