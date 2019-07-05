@@ -71,8 +71,10 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
 
 class GPUSwapChain {
     private descriptor: GPUSwapChainDescriptor
-    constructor(descriptor: GPUSwapChainDescriptor) {
+    private context: CanvasRenderingContext2D
+    constructor(descriptor: GPUSwapChainDescriptor, context: CanvasRenderingContext2D) {
         this.descriptor = descriptor
+        this.context = context
     }
     getCurrentTexture(): GPUTexture {
         return new GPUTexture()
@@ -85,7 +87,7 @@ export default class {
         this.context = context
     }
     configureSwapChain (descriptor: GPUSwapChainDescriptor) : GPUSwapChain {
-        return new GPUSwapChain(descriptor)
+        return new GPUSwapChain(descriptor, this.context)
     }
 }
   
