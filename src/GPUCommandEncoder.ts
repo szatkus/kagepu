@@ -4,6 +4,7 @@ import { GPURenderPipeline } from "./GPURenderPipeline";
 import GPUBuffer from "./GPUBuffer";
 import GPUBindGroup from "./GPUBindGroup";
 import { GPUCommandBuffer } from "./GPUQueue";
+import dontKnow from "./dontKnow";
 
 enum GPULoadOp {
     "clear",
@@ -67,11 +68,11 @@ export class GPURenderPassEncoder {
         this.pipeline = pipeline
     }
 
-    setVertexBuffers(startSlot: number, buffers: Array<GPUBuffer>, offset: number) {
-        /*for (let i = 0; i < offset; i++) {
-            this.vertexBuffers[startSlot + i] = buffers
-        }*/
-        // not sure what I should do here
+    setVertexBuffers(startSlot: number, buffers: Array<GPUBuffer>, offsets: Array<number>) {
+        if (startSlot != 0 || offsets.length != 1 || offsets[0] != 0) {
+            dontKnow()
+        }
+        this.vertexBuffers = this.vertexBuffers.concat(buffers)
     }
 
     draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
