@@ -3,6 +3,7 @@ import GPUTextureView from "./GPUTextureView";
 import { GPURenderPipeline } from "./GPURenderPipeline";
 import GPUBuffer from "./GPUBuffer";
 import GPUBindGroup from "./GPUBindGroup";
+import { GPUCommandBuffer } from "./GPUQueue";
 
 enum GPULoadOp {
     "clear",
@@ -48,10 +49,16 @@ interface GPURenderPassDescriptor extends GPUObjectDescriptorBase {
     depthStencilAttachment?: GPURenderPassDepthStencilAttachmentDescriptor
 }
 
+interface KPUDrawStep {
+    vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number
+}
+
 class GPURenderPassEncoder {
     private descriptor: GPURenderPassDescriptor
     private pipeline?: GPURenderPipeline
     private vertexBuffers: Array<GPUBuffer> = []
+    private draws: Array<KPUDrawStep> = []
+    private isFinished = false
     constructor(descriptor: GPURenderPassDescriptor) {
         this.descriptor = descriptor
     }
@@ -68,7 +75,9 @@ class GPURenderPassEncoder {
     }
 
     draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
-
+        this.draws.push({
+            vertexCount, instanceCount, firstVertex, firstInstance
+        })
     }
 
     // GPUProgrammablePassEncoder
@@ -79,17 +88,33 @@ class GPURenderPassEncoder {
     }
 
     endPass() {
+        this.isFinished = true
+    }
+}
+
+class KCommandBuffer implements GPUCommandBuffer  {
+    constructor(private renderPasses: Array<GPURenderPassEncoder>) {
 
     }
 }
 
 export default class GPUCommandEncoder {
+    private currentRenderPass?: GPURenderPassEncoder
+    private renderPasses: Array<GPURenderPassEncoder> = []
     beginRenderPass(descriptor: GPURenderPassDescriptor): GPURenderPassEncoder {
-        return new GPURenderPassEncoder(descriptor)
+        if (this.currentRenderPass) {
+           this.renderPasses.push(this.currentRenderPass)
+        }
+        this.currentRenderPass = new GPURenderPassEncoder(descriptor)
+        return this.currentRenderPass
     }
-    finish(descriptor?: any) {
+    finish(descriptor?: any): GPUCommandBuffer  {
         if (descriptor) {
             throw new Error('not supported yet')
         }
+        if (this.currentRenderPass) {
+            this.renderPasses.push(this.currentRenderPass)
+         }
+        return new KCommandBuffer(this.renderPasses)
     }
   }

@@ -31,7 +31,7 @@ export default class {
     return this.createBufferMapped(descriptor)
   }
   createTexture (descriptor: GPUTextureDescriptor): GPUTexture {
-    return new GPUTexture()
+    return new GPUTexture(descriptor)
   }
   createSampler (descriptor: GPUSamplerDescriptor): GPUSampler {
     return new GPUSampler()
@@ -40,13 +40,13 @@ export default class {
     return new GPUBindGroupLayout(descriptor)
   }
   createPipelineLayout(descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
-    return new GPUPipelineLayout()
+    return new GPUPipelineLayout(descriptor)
   }
   createShaderModule(descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
     return new GPUShaderModule()
   }
   createRenderPipeline(descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
-    return new GPURenderPipeline()
+    return new GPURenderPipeline(descriptor)
   }
   createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
     return new GPUBindGroup(descriptor)
