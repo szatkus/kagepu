@@ -37,7 +37,7 @@ export default class {
     return new GPUSampler()
   }
   createBindGroupLayout(descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
-    return new GPUBindGroupLayout()
+    return new GPUBindGroupLayout(descriptor)
   }
   createPipelineLayout(descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
     return new GPUPipelineLayout()
