@@ -25,8 +25,8 @@ export default class {
   }
   createBufferMapped (descriptor: GPUBufferDescriptor): [GPUBuffer, ArrayBuffer] {
     let buffer = new GPUBuffer(descriptor)
-    buffer.mapped = true
-    return [buffer, buffer.data]
+    buffer._mapped = true
+    return [buffer, buffer._data]
   }
   async createBufferMappedAsync (descriptor: GPUBufferDescriptor): Promise<[GPUBuffer, ArrayBuffer]> {
     return this.createBufferMapped(descriptor)

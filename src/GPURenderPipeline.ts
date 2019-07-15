@@ -1,7 +1,7 @@
 import { GPURenderPipelineDescriptor } from "./interfaces";
 
 export class GPURenderPipeline {
-    constructor(private descriptor: GPURenderPipelineDescriptor) {
+    constructor(public _descriptor: GPURenderPipelineDescriptor) {
         
     }
 }

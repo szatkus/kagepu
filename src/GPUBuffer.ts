@@ -2,43 +2,43 @@ import { GPUBufferDescriptor } from './interfaces'
 import { GPUBufferUsage } from './constants'
 
 export default class {
-  data: ArrayBuffer
-  usage: number
-  mapped = false
-  destroyed = false
+  _data: ArrayBuffer
+  _usage: number
+  _mapped = false
+  _destroyed = false
   constructor (descriptor: GPUBufferDescriptor) {
-    this.data = new ArrayBuffer(descriptor.size)
-    this.usage = descriptor.usage
+    this._data = new ArrayBuffer(descriptor.size)
+    this._usage = descriptor.usage
   }
   setSubData (offset: number, data: ArrayBuffer) {
-    if (!(this.usage & GPUBufferUsage.TRANSFER_DST)) {
+    if (!(this._usage & GPUBufferUsage.TRANSFER_DST)) {
       // ERROR: validation error
     }
-    if (!(offset + data.byteLength <= this.data.byteLength)) {
+    if (!(offset + data.byteLength <= this._data.byteLength)) {
       // ERROR: validation error
     }
-    if (this.mapped || this.destroyed) {
+    if (this._mapped || this._destroyed) {
       // ERROR: validation error
     }
     // TODO: alignment
     let input = new Uint8Array(data)
-    let output = new Uint8Array(this.data)
+    let output = new Uint8Array(this._data)
     for (let i = 0; i < data.byteLength; i++) {
       output[offset + i] = input[i]
     }
   }
   async mapReadAsync (): Promise<ArrayBuffer> {
-    this.mapped = true
-    return this.data.slice(0)
+    this._mapped = true
+    return this._data.slice(0)
   }
   async mapWriteAsync (): Promise<ArrayBuffer> {
-    this.mapped = true
-    return this.data
+    this._mapped = true
+    return this._data
   }
   unmap () {
-    this.mapped = false
+    this._mapped = false
   }
   destroy () {
-    this.destroyed = false
+    this._destroyed = false
   }
 }

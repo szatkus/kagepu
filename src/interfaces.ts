@@ -1,5 +1,5 @@
-import GPUPipelineLayout from "./GPUPipelineLayout";
-import GPUShaderModule from "./GPUShaderModule";
+import GPUPipelineLayout from './GPUPipelineLayout';
+import GPUShaderModule from './GPUShaderModule';
 
 export interface GPUObjectDescriptorBase {
   label: string
@@ -76,10 +76,6 @@ export interface GPUPipelineLayoutDescriptor {
 export interface GPUBindGroupLayout {
 }
 
-export interface GPURenderPipelineDescriptor {
-  
-}
-
 export interface GPUPipelineDescriptorBase {
   layout: GPUPipelineLayout 
 }
@@ -104,6 +100,30 @@ export interface GPUColorStateDescriptor {
   writeMask: string
 }
 
+type GPUInputStepMode = 'vertex' | 'instance'
+
+type GPUVertexFormat = 'uchar2' | 'uchar4' | 'char2' | 'char4' | 'uchar2norm' | 'uchar4norm' | 'char2norm' | 'char4norm' | 'ushort2' | 'ushort4' | 'short2' | 'short4' | 'ushort2norm' | 'ushort4norm' | 'short2norm' | 'short4norm' | 'half2' | 'half4' | 'float' | 'float2' | 'float3' | 'float4' | 'uint' | 'uint2' | 'uint3' | 'uint4' | 'int' | 'int2' | 'int3' | 'int4'
+
+export interface GPUVertexAttributeDescriptor {
+  offset: number,
+  format: GPUVertexFormat,
+  shaderLocation: number
+}
+
+export interface GPUVertexBufferDescriptor {
+  stride: number,
+  stepMode: GPUInputStepMode,
+  attributeSet: GPUVertexAttributeDescriptor[]
+};
+
+export interface GPUVertexBufferDescriptor {
+
+}
+
+export interface GPUVertexInputDescriptor {
+  vertexBuffers: GPUVertexBufferDescriptor[]
+}
+
 export interface GPURenderPipelineDescriptor extends GPUPipelineDescriptorBase {
   vertexStage: GPUPipelineStageDescriptor,
   fragmentStage: GPUPipelineStageDescriptor,
@@ -112,5 +132,6 @@ export interface GPURenderPipelineDescriptor extends GPUPipelineDescriptorBase {
   colorStates: Array<GPUColorStateDescriptor>,
   //GPUDepthStencilStateDescriptor? depthStencilState;
   //GPUInputStateDescriptor inputState;
+  vertexInput: GPUVertexInputDescriptor,
   sampleCount: number
 }
