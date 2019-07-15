@@ -65,8 +65,10 @@ export interface GPUBindGroupLayoutDescriptor {
   bindings: Array<GPUBindGroupLayoutBinding>
 }
 
+export type GPUShaderCode = Uint32Array|string
+
 export interface GPUShaderModuleDescriptor {
-  code: ArrayBuffer|string
+  code: GPUShaderCode
 }
 
 export interface GPUPipelineLayoutDescriptor {

@@ -44,7 +44,7 @@ export default class {
     return new GPUPipelineLayout(descriptor)
   }
   createShaderModule(descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
-    return new GPUShaderModule()
+    return new GPUShaderModule(descriptor.code)
   }
   createRenderPipeline(descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     return new GPURenderPipeline(descriptor)
@@ -53,9 +53,6 @@ export default class {
     return new GPUBindGroup(descriptor)
   }
   createCommandEncoder(descriptor?: any): GPUCommandEncoder {
-    if (descriptor) {
-      throw new Error("not supported yet")
-    }
     return new GPUCommandEncoder()
   }
 
