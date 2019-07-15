@@ -83,6 +83,9 @@ export class GPURenderPassEncoder {
         })
     }
     draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
+        if (instanceCount != 1 || firstVertex != 0 || firstInstance != 0) {
+            dontKnow()
+        }
         this._checkState()
         this._commands.push({
             name: 'draw',
