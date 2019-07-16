@@ -38,29 +38,37 @@ export default class KQueue implements GPUQueue {
         this._bindGroups[index] = bindGroup
     }
     __command__draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
-        let vertexBuffer = this._vertexBuffers[0]._data
+        
         // TODO: clear color
         let inputBuffer = new ArrayBuffer(32)
-        let vertexBufferView = new Uint8Array(vertexBuffer)
         let inputBufferView = new Uint8Array(inputBuffer)
-        if (this._pipeline!._descriptor.vertexInput.vertexBuffers.length != 1) {
-            dontKnow()
-        }
-        let vertexBufferInput = this._pipeline!._descriptor.vertexInput.vertexBuffers[0]
-        if (vertexBufferInput.stepMode != 'vertex') {
-            dontKnow()
-        }
-        let offset = 0
+        
+        let offsets: number[] = []
         let vertexStage = this._pipeline!._descriptor.vertexStage
         for (let i = 0; i < vertexCount; i++) {
-            for (let attribute of vertexBufferInput.attributeSet) {
-                copyBytes(inputBufferView, attribute.offset, dataLength.get(attribute.format)!, vertexBufferView, offset + attribute.offset)
+            // according to the specification it's a required property, but in samples it's omitted
+            if (this._pipeline!._descriptor.vertexInput.vertexBuffers &&
+                this._pipeline!._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
+                dontKnow()
+            }
+            for (let j = 0; j < this._vertexBuffers.length; j++) {
+                let offset = offsets[j] || 0
+                let vertexBuffer = this._vertexBuffers[0]._data
+                let vertexBufferView = new Uint8Array(vertexBuffer)
+                let vertexBufferInput = this._pipeline!._descriptor.vertexInput.vertexBuffers[0]
+                if (vertexBufferInput.stepMode != 'vertex') {
+                    dontKnow()
+                }
+                for (let attribute of vertexBufferInput.attributeSet) {
+                    copyBytes(inputBufferView, attribute.offset, dataLength.get(attribute.format)!, vertexBufferView, offset + attribute.offset)
+                }
+                offsets[j] = offset + vertexBufferInput.stride
             }
             console.debug(vertexStage.entryPoint)
             console.debug(vertexStage.module)
             console.debug(new Float32Array(inputBuffer))
             // execute a shader
-            offset += vertexBufferInput.stride
+            
         }
     }
 }
