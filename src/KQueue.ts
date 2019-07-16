@@ -5,6 +5,7 @@ import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from "./GPURe
 import GPUBindGroup from "./GPUBindGroup";
 import GPUBuffer from "./GPUBuffer";
 import dontKnow from "./dontKnow";
+import { GPUVertexInputDescriptor, GPUPipelineStageDescriptor } from "./interfaces";
 
 export default class KQueue implements GPUQueue {
     _pipeline?: GPURenderPipeline
@@ -38,19 +39,19 @@ export default class KQueue implements GPUQueue {
         this._bindGroups[index] = bindGroup
     }
     __command__draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
-        
+        let pipeline = this._pipeline ? this._pipeline : dontKnow()
         // TODO: clear color
-        let inputBuffer = new ArrayBuffer(32)
-        let inputBufferView = new Uint8Array(inputBuffer)
         
         let offsets: number[] = []
         let vertexStage = this._pipeline!._descriptor.vertexStage
         for (let i = 0; i < vertexCount; i++) {
             // according to the specification it's a required property, but in samples it's omitted
-            if (this._pipeline!._descriptor.vertexInput.vertexBuffers &&
-                this._pipeline!._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
+            if (pipeline._descriptor.vertexInput.vertexBuffers &&
+                pipeline._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
                 dontKnow()
             }
+            let inputBuffer = new ArrayBuffer(32)
+            let inputBufferView = new Uint8Array(inputBuffer)
             for (let j = 0; j < this._vertexBuffers.length; j++) {
                 let offset = offsets[j] || 0
                 let vertexBuffer = this._vertexBuffers[0]._data
@@ -67,9 +68,65 @@ export default class KQueue implements GPUQueue {
             console.debug(vertexStage.entryPoint)
             console.debug(vertexStage.module)
             console.debug(new Float32Array(inputBuffer))
-            // execute a shader
-            
+            executeVertexShader(pipeline._descriptor.vertexStage, pipeline._descriptor.vertexInput, inputBuffer)
         }
+    }
+}
+
+const CAPABILITY_SHADER = 1
+
+const OP_EXT_INST_IMPORT = 11
+const OP_CAPABILITY = 17
+
+function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInput: GPUVertexInputDescriptor, inputBuffer: ArrayBuffer) {
+    function consumeString(): String {
+        let start = pos
+        let end = start
+        while ((code[pos] & 0xFF) != 0) {
+            pos++
+            end = pos
+        }
+        let stringBuffer = code.slice(start, end + 1).buffer
+        let decoder = new TextDecoder('utf-8')
+        //FIXME: could fail if there are actuale whitespaces in a string
+        return decoder.decode(stringBuffer).trim()
+    }
+    if (!vertexStage.module._spirvCode) {
+        dontKnow()
+    }
+    let code = vertexStage.module._spirvCode!
+    let pos = 1
+    let heap = []
+    while (pos < code.length) {
+        if (pos == 1) {
+            let majorVersion = (code[pos] & 0xFF0000) >> 16
+            let minorVersion = (code[pos] & 0xFF00) >> 8
+            console.debug(`version ${majorVersion}.${minorVersion}`)
+        }
+        if (pos >= 5) {
+            switch(code[pos] & 0xFF) {
+                case OP_EXT_INST_IMPORT:
+                    pos++
+                    let resultId = code[pos]
+                    pos++
+                    let name = consumeString()
+                    heap[resultId] = name
+                break
+                case OP_CAPABILITY:
+                    pos++
+                    if (code[pos] != CAPABILITY_SHADER) {
+                        dontKnow()
+                    }
+                break
+                default:
+                    console.debug(code[pos])
+                    console.debug(code[pos + 1])
+                    console.debug(code[pos + 2])
+                    console.debug(code[pos + 3])
+                    throw new Error(`Unknown opcode ${code[pos] & 0xFF}`)
+            }
+        }
+        pos++
     }
 }
 
