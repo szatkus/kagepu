@@ -90,8 +90,12 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInpu
         }
         let stringBuffer = code.slice(start, end + 1).buffer
         let decoder = new TextDecoder('utf-8')
-        //FIXME: could fail if there are actuale whitespaces in a string
-        return decoder.decode(stringBuffer).trim()
+        let rawString = decoder.decode(stringBuffer)
+        let i = rawString.length - 1
+        while (rawString.codePointAt(i) == 0) {
+            i--
+        }
+        return rawString.substring(0, i + 1)
     }
     if (!vertexStage.module._spirvCode) {
         dontKnow()
@@ -139,6 +143,9 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInpu
                         pos++
                     }
                     pos--
+                    heap[resultId] = {
+                        name, executionModel, interfaces
+                    }
                 break
                 case OP_CAPABILITY:
                     pos++
