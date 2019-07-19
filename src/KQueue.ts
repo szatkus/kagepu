@@ -76,6 +76,8 @@ export default class KQueue implements GPUQueue {
 const CAPABILITY_SHADER = 1
 
 const OP_EXT_INST_IMPORT = 11
+const OP_MEMORY_MODEL = 14
+const OP_ENTRY_POINT = 15
 const OP_CAPABILITY = 17
 
 function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInput: GPUVertexInputDescriptor, inputBuffer: ArrayBuffer) {
@@ -94,9 +96,11 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInpu
     if (!vertexStage.module._spirvCode) {
         dontKnow()
     }
+    let addressingModel, memoryModel
     let code = vertexStage.module._spirvCode!
     let pos = 1
     let heap = []
+    let entryPoints = new Map<string, any>()
     while (pos < code.length) {
         if (pos == 1) {
             let majorVersion = (code[pos] & 0xFF0000) >> 16
@@ -104,13 +108,37 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, vertexInpu
             console.debug(`version ${majorVersion}.${minorVersion}`)
         }
         if (pos >= 5) {
-            switch(code[pos] & 0xFF) {
+            let resultId, name
+            let opCode = code[pos] & 0xFF
+            let wordCount = (code[pos] & 0xFF0000) >> 16
+            let startPos = pos
+            switch(opCode) {
                 case OP_EXT_INST_IMPORT:
                     pos++
-                    let resultId = code[pos]
+                    resultId = code[pos]
                     pos++
-                    let name = consumeString()
+                    name = consumeString()
                     heap[resultId] = name
+                break
+                case OP_MEMORY_MODEL:
+                    pos++
+                    addressingModel = code[pos]
+                    pos++
+                    memoryModel = code[pos]
+                break
+                case OP_ENTRY_POINT:
+                    pos++
+                    let executionModel = code[pos]
+                    pos++
+                    resultId = code[pos]
+                    pos++
+                    name = consumeString()
+                    let interfaces = []
+                    while (pos + 1 < startPos + wordCount) {
+                        interfaces.push(code[pos])
+                        pos++
+                    }
+                    pos--
                 break
                 case OP_CAPABILITY:
                     pos++
