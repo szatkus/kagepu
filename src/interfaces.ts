@@ -97,9 +97,9 @@ export interface GPURasterizationStateDescriptor {
 
 export interface GPUColorStateDescriptor {
   format: string,
-  alphaBlend: string,
-  colorBlend: string,
-  writeMask: string
+  alphaBlend?: string,
+  colorBlend?: string,
+  writeMask?: string
 }
 
 type GPUInputStepMode = 'vertex' | 'instance'
