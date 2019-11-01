@@ -69,6 +69,12 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
     "depth24plus-stencil8"
 }
 
+export class Context2DTexture extends GPUTexture {
+    constructor(public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
+        super()
+    }
+}
+
 class GPUSwapChain {
     private descriptor: GPUSwapChainDescriptor
     private context: CanvasRenderingContext2D
@@ -77,7 +83,7 @@ class GPUSwapChain {
         this.context = context
     }
     getCurrentTexture(): GPUTexture {
-        return new GPUTexture()
+        return new Context2DTexture(this.context, this.descriptor)
     }
 }
 

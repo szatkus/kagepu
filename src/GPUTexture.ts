@@ -2,14 +2,14 @@ import { GPUTextureViewDescriptor, GPUTextureDescriptor } from './interfaces'
 import GPUTextureView from './GPUTextureView'
 
 export default class {
-  constructor(private descriptor?: GPUTextureDescriptor) {
+  constructor(protected descriptor?: GPUTextureDescriptor) {
     
   }
   createView (descriptor: GPUTextureViewDescriptor): GPUTextureView {
-    return new GPUTextureView(descriptor)
+    return new GPUTextureView(this, descriptor)
   }
   createDefaultView (): GPUTextureView {
-    return new GPUTextureView()
+    return new GPUTextureView(this)
   }
   destroy () {
 
