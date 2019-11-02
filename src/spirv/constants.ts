@@ -2,8 +2,7 @@ import { CompilationState, CompiledModule } from "./compilation";
 import { Execution } from "./execution";
 import { Type } from "./types";
 import dontKnow from "../dontKnow";
-import { globalMemory, ConstantComposite } from "./memory";
-import { type } from "os";
+import { ConstantComposite } from "./memory";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -16,8 +15,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let value = state.consumeWord()
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
-                    let pointer = globalMemory.createVariable(type)
-                    globalMemory.writeUint32(pointer, value)
+                    let pointer = execution.getGlobalMemory().createVariable(type)
+                    execution.getGlobalMemory().writeUint32(pointer, value)
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)

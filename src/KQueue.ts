@@ -15,10 +15,11 @@ export default class KQueue implements GPUQueue {
     _passDescriptor?: GPURenderPassDescriptor
     _bindGroups: GPUBindGroup[] = []
     submit(buffers: Array<KCommandBuffer>) {
-        console.debug(buffers)
+        //console.profile()
         for (let commandBuffer of buffers) {
             this._processRenderPasses(commandBuffer._renderPasses)
         }
+        //console.profileEnd()
     }
     _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
         for (let pass of renderPasses) {
@@ -49,7 +50,8 @@ export default class KQueue implements GPUQueue {
         let verticiesData: any[] = []
         for (let i = 0; i < vertexCount; i++) {
             // according to the specification it's a required property, but in samples it's omitted
-            if (pipeline._descriptor.vertexInput.vertexBuffers &&
+            if (pipeline._descriptor.vertexInput &&
+                pipeline._descriptor.vertexInput.vertexBuffers &&
                 pipeline._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
                 dontKnow()
             }

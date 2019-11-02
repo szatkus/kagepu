@@ -1,11 +1,12 @@
-import { Memory, globalMemory, InputMemory } from "./memory"
+import { Memory, InputMemory } from "./memory"
 import dontKnow from "../dontKnow"
 import { GPUPipelineStageDescriptor } from "../interfaces"
 import { CompiledModule, compile } from "./compilation"
 
 export class Execution {
     heap: any[] = []
-    functionMemory = new Memory(new ArrayBuffer(1024 * 4))
+    private functionMemory = new Memory(new ArrayBuffer(1024 * 4))
+    private globalMemory = new Memory(new ArrayBuffer(1024 * 65))
 
     private constructor(private inputMemory: Memory, private outputMemory: Memory) {
 
@@ -26,7 +27,10 @@ export class Execution {
             return this.functionMemory
         }
         dontKnow()
-        return globalMemory
+        return this.getGlobalMemory()
+    }
+    getGlobalMemory(): Memory {
+        return this.globalMemory
     }
 
     static start(input: Memory, output: Memory, module: CompiledModule) {

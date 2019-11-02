@@ -1,7 +1,6 @@
 import { CompilationState, CompiledModule } from "./compilation";
 import { Execution } from "./execution";
 import { Type } from "./types";
-import { globalMemory } from "./memory";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -14,7 +13,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let constituents = state.consumeArray()
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = globalMemory.createVariable(type)
+                    execution.heap[resultId] = execution.getGlobalMemory().createVariable(type)
                     let i = 0
                     constituents.forEach(c => {
                         execution.heap[resultId].setIndex(i, execution.heap[c].read())

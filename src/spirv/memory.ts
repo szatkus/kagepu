@@ -4,9 +4,7 @@ import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 
 export class Pointer {
-    constructor(public memory: Memory, public address: number, public type: Type) {
-
-    }
+    constructor(public memory: Memory, public address: number, public type: Type) {}
 
     read(): number[] {
         return Array.from(this.memory.read(this))
@@ -117,14 +115,8 @@ export class InputMemory extends Memory {
     }
 }
 
-export const globalMemory = new Memory(new ArrayBuffer(1024 * 1024 * 4)) // our GPU has 4MB
-
 export class ConstantComposite {
-    constructor(public type: Type, public constituents: number[]) {
-
-    }
-
-    
+    constructor(public type: Type, public constituents: number[]) {}
 }
 
 
