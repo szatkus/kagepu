@@ -4,7 +4,11 @@ import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 
 export class Pointer {
-    constructor(public memory: Memory, public address: number, public type: Type) {}
+    constructor(public memory: Memory, public address: number, public type: Type) {
+        if (type == undefined) {
+            debugger
+        }
+    }
 
     read(): number[] {
         return Array.from(this.memory.read(this))
@@ -65,7 +69,15 @@ export class Memory {
         }
         let pointer = this.lastFree
         this.lastFree += size
+        if (this.lastFree > this.memory.byteLength) {
+            throw new Error("Out of memory")
+        }
         return pointer
+    }
+
+    clear() {
+        this.int32View.fill(0)
+        this.lastFree = 0
     }
 
     createVariable(type: Type): Pointer {

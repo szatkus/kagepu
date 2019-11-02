@@ -3,13 +3,27 @@ import dontKnow from "../dontKnow"
 import { GPUPipelineStageDescriptor } from "../interfaces"
 import { CompiledModule, compile } from "./compilation"
 
+let functionMemoryPool: Memory[] = []
+let globalMemoryPool: Memory[] = []
+
 export class Execution {
     heap: any[] = []
-    private functionMemory = new Memory(new ArrayBuffer(1024 * 4))
-    private globalMemory = new Memory(new ArrayBuffer(1024 * 65))
+    private functionMemory: Memory
+    private globalMemory: Memory
 
     private constructor(private inputMemory: Memory, private outputMemory: Memory) {
-
+        if (functionMemoryPool.length > 0) {
+            this.functionMemory = functionMemoryPool.pop()!
+            this.functionMemory.clear()
+        } else {
+            this.functionMemory = new Memory(new ArrayBuffer(1024 * 4))
+        }
+        if (globalMemoryPool.length > 0) {
+            this.globalMemory = globalMemoryPool.pop()!
+            this.globalMemory.clear()
+        } else {
+            this.globalMemory = new Memory(new ArrayBuffer(1024 * 65))
+        }
     }
 
     private run(module: CompiledModule) {
@@ -36,6 +50,8 @@ export class Execution {
     static start(input: Memory, output: Memory, module: CompiledModule) {
         let execution = new Execution(input, output)
         execution.run(module)
+        functionMemoryPool.push(execution.functionMemory)
+        globalMemoryPool.push(execution.globalMemory)
     }
 }
 
