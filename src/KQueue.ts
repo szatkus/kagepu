@@ -89,12 +89,15 @@ export default class KQueue implements GPUQueue {
                     if (dir1 == -1 && dir2 == 1 && dir3 == -1) {
                         let inputBuffer = new ArrayBuffer(32)
                         let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, inputBuffer)
-                        output._context.fillStyle = `rgba(${pixelData.color[0] * 255}, ${pixelData.color[1] * 255}, ${pixelData.color[2] * 255}, ${pixelData.color[3]})`
-                        output._context.fillRect(x, y, 1, 1)
+                        imageData.data[(y * imageData.height + x) * 4] = pixelData.color[0] * 255
+                        imageData.data[(y * imageData.height + x) * 4 + 1] = pixelData.color[1] * 255
+                        imageData.data[(y * imageData.height + x) * 4 + 2] = pixelData.color[2] * 255
+                        imageData.data[(y * imageData.height + x) * 4 + 3] = pixelData.color[3] * 255
                     }
                 }
             }
         }
+        output._context.putImageData(imageData, 0, 0)
     }
 }
 
@@ -340,7 +343,55 @@ class Location {
     }
 }
 
+class Execution {
+    names: String[] = []
+    heap: any[] = []
+    decorations: any[] = []
+    flow: Function[] = []
+    inputMemory?: Memory
+    outputMemory = new Memory(new ArrayBuffer(1024 * 4))
+    functionMemory = new Memory(new ArrayBuffer(1024 * 4))
+    getMemorySubsystem(storageClass: number): Memory {
+        if (storageClass === 1) {
+            return this.inputMemory!
+        }
+        if (storageClass === 3) {
+            return this.outputMemory
+        }
+        if (storageClass === 7) {
+            return this.functionMemory
+        }
+        dontKnow()
+        return globalMemory
+    }
+
+    start(input: Memory, output: Memory) {
+        this.inputMemory = input
+        this.outputMemory = output
+        this.functionMemory = new Memory(new ArrayBuffer(1024 * 4))
+        this.heap = []
+        this.flow.forEach(f => f(this))
+    }
+}
+
+let cache = new Map()
+
 function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: ArrayBuffer) {
+    let inputMemory = new InputMemory(inputBuffer)
+    let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
+    if (!vertexStage.module._spirvCode) {
+        dontKnow()
+    }
+    let code = vertexStage.module._spirvCode!
+    let execution = <Execution> vertexStage.module._compiled
+    if (execution == undefined) {
+        execution = compile(code)
+        vertexStage.module._compiled = execution
+    }
+    execution.start(inputMemory, outputMemory)
+    return outputMemory.float32View
+}
+function compile(code: Uint32Array) {
     function consumeString(): String {
         let start = pos
         let end = start
@@ -357,11 +408,11 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
         }
         return rawString.substring(0, i + 1)
     }
-    function getData(object: any): number[] {
+    function getData(object: any, heap: any[]): number[] {
         let result: number[] = []
         if (object instanceof ConstantComposite) {
             for (let c of object.constituents) {
-                result = result.concat(getData(heap[c]))
+                result = result.concat(getData(heap[c], heap))
             }
             return result
         }
@@ -371,35 +422,11 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
         dontKnow()
         return []
     }
-    let inputMemory = new InputMemory(inputBuffer)
-    let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
-    let functionMemory = new Memory(new ArrayBuffer(1024 * 4))
-    function getMemorySubsystem(storageClass: number): Memory {
-        if (storageClass === 1) {
-            return inputMemory
-        }
-        if (storageClass === 3) {
-            return outputMemory
-        }
-        if (storageClass === 7) {
-            return functionMemory
-        }
-        dontKnow()
-        return globalMemory
-    }
-    if (!vertexStage.module._spirvCode) {
-        dontKnow()
-    }
-    let addressingModel, memoryModel
-    let code = vertexStage.module._spirvCode!
-    let pos = 1
-    let heap: any[] = []
-    let members = []
-    let names = []
+    let execution = new Execution()
+    let pos = 1    
     let opCode, wordCount, startPos, endPos: number
-    let decorations: any[] = []
     let entryPoint
-    let currentFunction
+    let flow: Function[] = []
     while (pos < code.length) {
         if (pos == 1) {
             let majorVersion = (code[pos] & 0xFF0000) >> 16
@@ -407,7 +434,7 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
             console.debug(`version ${majorVersion}.${minorVersion}`)
         }
         if (pos >= 5) {
-            let resultId, name, typeId, memberNumber, targetId, width, count, objectId, indexes, pointer
+            let name, memberNumber, targetId, width: number, pointer: Pointer
             let type: Type
             opCode = code[pos] & 0xFF
             wordCount = (code[pos] & 0xFF0000) >> 16
@@ -423,19 +450,23 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
                 break
                 // OpName
                 case 5:
-                    pos++
-                    targetId = code[pos]
-                    pos++
-                    names[targetId] = consumeString()
-                    console.debug(`$${targetId} OpName  ` + names[targetId].toString())
+                    {
+                        pos++
+                        let targetId = code[pos]
+                        pos++
+                        execution.names[targetId] = consumeString()
+                        console.debug(`$${targetId} OpName  ` + execution.names[targetId].toString())
+                    }
                 break
                 // OpString
                 case 7:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    heap[resultId] = consumeString()
-                    console.debug(`$${resultId} = OpString ` + heap[resultId].toString())
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        execution.heap[resultId] = consumeString()
+                        console.debug(`$${resultId} = OpString ` + execution.heap[resultId].toString())
+                    }
                 break
                 // OpEntryPoint
                 case 15:
@@ -451,7 +482,7 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
                         pos++
                     }
                     pos--
-                    if (vertexStage.entryPoint !== name) dontKnow()
+                    //if (vertexStage.entryPoint !== name) dontKnow()
                     console.debug(`OpEntryPoint ${executionModel} $${entryPoint} ${name} ${interfaces}`)
                 break
                 // OpExecutionMode
@@ -471,150 +502,196 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
                     console.debug(`OpCapability ${code[pos]}`)
                 break
                 case OP_MEMBER_NAME:
-                    pos++
-                    typeId = code[pos]
-                    pos++
-                    memberNumber = code[pos]
-                    pos++
-                    name = consumeString()
-                    members[memberNumber] = {
-                        name,
-                        typeId
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        pos++
+                        memberNumber = code[pos]
+                        pos++
+                        name = consumeString()
+                        console.debug(`OP_MEMBER_NAME ${name} ${typeId}`)
                     }
-                    console.debug(`OP_MEMBER_NAME ${name} ${typeId}`)
                 break
                 case OP_TYPE_VOID:
-                    pos++
-                    resultId = code[pos]
-                    heap[resultId] = new TypeVoid
-                    console.debug(`$${resultId} = OP_TYPE_VOID`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        flow.push((execution: Execution) => {
+                            execution.heap[resultId] = new TypeVoid
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_VOID`)
+                    }
                 break
                 case OP_TYPE_INT:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    width = code[pos]
-                    pos++
-                    let signed = code[pos] == 1
-                    heap[resultId] = new TypeInt(width, signed)
-                    console.debug(`$${resultId} = OP_TYPE_INT(${width}, ${signed})`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let width = code[pos]
+                        pos++
+                        let signed = code[pos] == 1
+                        flow.push((execution: Execution) => {
+                            execution.heap[resultId] = new TypeInt(width, signed)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_INT(${width}, ${signed})`)
+                    }
                 break
                 case OP_TYPE_FLOAT:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    width = code[pos]
-                    heap[resultId] = new TypeFloat(width)
-                    console.debug(`$${resultId} = OP_TYPE_FLOAT(${width})`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        width = code[pos]
+                        flow.push((execution: Execution) => {
+                            execution.heap[resultId] = new TypeFloat(width)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_FLOAT(${width})`)
+                    }
                 break
                 case OP_TYPE_VECTOR:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    count = code[pos]
-                    heap[resultId] = new TypeVector(type, count)
-                    console.debug(`$${resultId} = OP_TYPE_VECTOR(${type.constructor.name}, ${count})`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let typeId = code[pos]
+                        pos++
+                        let count = code[pos]
+                        flow.push((execution: Execution) => {
+                            let type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = new TypeVector(type, count)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_VECTOR($${typeId}, ${count})`)
+                    }
                 break
                 // OP_TYPE_ARRAY
                 case 28:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    count = code[pos]
-                    heap[resultId] = new TypeArray(type, count)
-                    console.debug(`$${resultId} = OP_TYPE_ARRAY(${type.constructor.name} ${count})`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let typeId = code[pos]
+                        pos++
+                        let count = code[pos]
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = new TypeArray(type, count)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_ARRAY($${typeId} ${count})`)
+                    }
                 break
                 // OP_TYPE_POINTER
                 case 32:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    let storageClass = code[pos]
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    heap[resultId] = new TypePointer(storageClass, type)
-                    console.debug(`$${resultId} = OP_TYPE_POINTER(${storageClass} ${type.constructor.name})`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let storageClass = code[pos]
+                        pos++
+                        let typeId = code[pos]
+                        
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = new TypePointer(storageClass, type)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_POINTER(${storageClass} $${typeId})`)
+                    }
                 break
                 // OP_TYPE_STRUCT
                 case 30:
-                    pos++
-                    resultId = code[pos]
-                    let types: Type[] = []
-                    for (pos++; pos < endPos; pos++) {
-                        typeId = code[pos]
-                        types.push(heap[typeId])
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        let typeIds: number[] = []
+                        for (pos++; pos < endPos; pos++) {
+                            typeIds.push(code[pos])
+                        }
+                        pos--
+                        flow.push((execution: Execution) => {
+                            let types = typeIds.map(t => execution.heap[t])
+                            execution.heap[resultId] = new TypeStruct(types)
+                        })
+                        console.debug(`$${resultId} = OP_TYPE_STRUCT(${typeIds})`)
                     }
-                    pos--
-                    heap[resultId] = new TypeStruct(types)
-                    console.debug(`$${resultId} = OP_TYPE_STRUCT(${types})`)
                 break
                 // OpConstant
                 case 43:
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    if (wordCount > 4) dontKnow()
-                    let value = code[pos]
-                    pointer = globalMemory.createVariable(type)
-                    globalMemory.writeUint32(pointer, value)
-                    heap[resultId] = pointer
-                    console.debug(`$${resultId} = OpConstant ${type.constructor.name} ${value}`)
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        if (wordCount > 4) dontKnow()
+                        let value = code[pos]
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            pointer = globalMemory.createVariable(type)
+                            globalMemory.writeUint32(pointer, value)
+                            execution.heap[resultId] = pointer
+                        })
+                        console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)
+                    }
                 break
                 // OpConstantComposite
                 case 44:
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    let constituents = []
-                    for (pos++; pos < endPos; pos++) {
-                        constituents.push(code[pos])
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        
+                        pos++
+                        let resultId = code[pos]
+                        let constituents: number[] = []
+                        for (pos++; pos < endPos; pos++) {
+                            constituents.push(code[pos])
+                        }
+                        pos--
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = new ConstantComposite(type, constituents)
+                        })
+                        console.debug(`$${resultId} = OpConstantComposite $${typeId}, ${constituents}`)
                     }
-                    pos--
-                    heap[resultId] = new ConstantComposite(type, constituents)
-                    console.debug(`$${resultId} = OpConstantComposite ${type}, ${constituents}`)
                 break
                 // OpFunction
                 case 54:
-                    pos++
-                    typeId = code[pos]
-                    let returnType = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    let functionControl = code[pos]
-                    pos++
-                    typeId = code[pos]
-                    let functionType = <Type> heap[typeId]
-                    currentFunction = {
-                        functionType,
-                        returnType,
-                        functionControl
+                    {
+                        pos++
+                        let returnTypeId = code[pos]
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let functionControl = code[pos]
+                        pos++
+                        let functionTypeId = code[pos]
+                        
+                        if (entryPoint != resultId) dontKnow()
+                        flow.push((execution: Execution) => {
+                            let returnType = <Type> execution.heap[returnTypeId]
+                            let functionType = <Type> execution.heap[functionTypeId]
+                            execution.heap[resultId] = {
+                                functionType,
+                                returnType,
+                                functionControl
+                            }
+                        })
+                        console.debug(`$${resultId} = OpFunction $${functionTypeId} $${returnTypeId} ${functionControl}`)
                     }
-                    heap[resultId] = currentFunction
-                    if (entryPoint != resultId) dontKnow()
-                    console.debug(`$${resultId} = OpFunction ${functionType.constructor.name} ${returnType.constructor.name} ${functionControl}`)
                 break
-                case OP_TYPE_FUNCTION:
-                    if (wordCount > 3) dontKnow()
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    heap[resultId] = new TypeFunction(type)
-                    console.debug(`$${resultId} = OP_TYPE_FUNCTION(${type.constructor.name})`)
+                // OpTypeFunction
+                case 33:
+                    {
+                        if (wordCount > 3) dontKnow()
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let typeId = code[pos]
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = new TypeFunction(type)
+                        })
+                        console.debug(`$${resultId} = OpTypeFunction $${typeId}`)
+                    }
                 break
                 // OpDecorate
                 case 71:
@@ -638,117 +715,154 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
                     } else {
                         dontKnow()
                     }
-                    decorations[targetId] = decorations[targetId] ? decorations[targetId].push(decoration) : [decoration]
+                    execution.decorations[targetId] = execution.decorations[targetId] ? execution.decorations[targetId].push(decoration) : [decoration]
                     console.debug(`decorate ${targetId} with ${code[pos]}`)
                 break
                 case OP_MEMBER_DECORATE:
-                    pos++
-                    typeId = code[pos]
-                    pos++
-                    memberNumber = code[pos]
-                    pos++
-                    if (code[pos] == 11) {
+                    {
                         pos++
-                        (members[memberNumber] as any).builtin = code[pos]
-                    } else {
-                        dontKnow()
+                        let typeId = code[pos]
+                        pos++
+                        memberNumber = code[pos]
+                        pos++
+                        if (code[pos] == 11) {
+                            pos++
+                            //(members[memberNumber] as any).builtin = code[pos]
+                        } else {
+                            dontKnow()
+                        }
+                        console.debug(`OP_MEMBER_DECORATE ${memberNumber}`)
                     }
-                    console.debug(`OP_MEMBER_DECORATE ${memberNumber}`)
                 break
                 case OP_EXT_INST_IMPORT:
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    name = consumeString()
-                    heap[resultId] = name
-                    console.debug(`OP_EXT_INST_IMPORT ${name}`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let name = consumeString()
+                        flow.push((execution: Execution) => {
+                            execution.heap[resultId] = name
+                        })
+                        console.debug(`OP_EXT_INST_IMPORT ${name}`)
+                    }
                 break
                 case OP_MEMORY_MODEL:
                     pos++
-                    addressingModel = code[pos]
+                    let addressingModel = code[pos]
                     pos++
-                    memoryModel = code[pos]
+                    let memoryModel = code[pos]
                     console.debug(`OP_MEMORY_MODEL ${addressingModel} ${memoryModel}`)
                 break
                 // OpVariable
                 case 59:
-                    if (wordCount > 4) dontKnow()
-                    pos++
-                    typeId = code[pos]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    storageClass = code[pos]
-                    let pointerType = <TypePointer> heap[typeId]
-                    type = pointerType.type
-                    pointer = getMemorySubsystem(storageClass).createVariable(type)
-                    heap[resultId] = pointer
-                    console.debug(`$${resultId} = OpVariable ${type.constructor.name} ${pointer} ${storageClass}`)
+                    {
+                        if (wordCount > 4) dontKnow()
+                        pos++
+                        let typeId = code[pos]
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let storageClass = code[pos]
+                        flow.push((execution: Execution) => {
+                            let pointerType = <TypePointer> execution.heap[typeId]
+                            type = pointerType.type
+                            pointer = execution.getMemorySubsystem(storageClass).createVariable(type)
+                            execution.heap[resultId] = pointer
+                        })
+                        console.debug(`$${resultId} = OpVariable ${typeId} ${storageClass}`)
+                    }
                 break
                 // OpLoad
                 case 61:
-                    if (wordCount > 4) dontKnow()
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    let loadId = code[pos]
-                    heap[resultId] = heap[loadId]
-                    console.debug(`$${resultId} = OpLoad ${type.constructor.name} $${loadId}`)
+                    {
+                        if (wordCount > 4) dontKnow()
+                        pos++
+                        let typeId = code[pos]
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let loadId = code[pos]
+                        flow.push((execution: Execution) => {
+                            let type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = execution.heap[loadId]
+                        })
+                        console.debug(`$${resultId} = OpLoad ${typeId} $${loadId}`)
+                    }
                 break
                 // OpStore
                 case 62:
-                    if (wordCount > 4) dontKnow()
-                    pos++
-                    pointer = heap[code[pos]]
-                    pos++
-                    objectId = code[pos]
-                    let object = heap[objectId]
-                    let data = getData(object)
-                    pointer.write(data)
-                    console.debug(`OpStore(${pointer}, ${objectId})`)
+                    {
+                        if (wordCount > 4) dontKnow()
+                        pos++
+                        let pointerId = code[pos]
+                        pos++
+                        let objectId = code[pos]
+                        
+                        
+                        flow.push((execution: Execution) => {
+                            let pointer = execution.heap[pointerId]
+                            let object = execution.heap[objectId]
+                            let data = getData(object, execution.heap)
+                            pointer.write(data)
+                        })
+                        console.debug(`OpStore $${pointerId} $${objectId}`)
+                    }
                 break
                 // OpAccessChain
                 case 65:
-                    pos++
-                    typeId = code[pos]
-                    type = <TypePointer> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    let baseId = code[pos]
-                    let base = heap[baseId]
-                    indexes = []
-                    for (pos++; pos < endPos; pos++) {
-                        let index = heap[code[pos]].readValue()
-                        base = base.getIndex(index)
-                        indexes.push(index)
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let baseId = code[pos]
+                        
+                        let indexes: number[] = []
+                        for (pos++; pos < endPos; pos++) {
+                            let index = code[pos]
+                            indexes.push(index)
+                        }
+                        pos--
+                        flow.push((execution: Execution) => {
+                            let type = <TypePointer> execution.heap[typeId]
+                            let base = execution.heap[baseId]
+                            indexes.forEach(i => {
+                                let index = execution.heap[i].readValue()
+                                base = base.getIndex(index)
+                            })
+                            execution.heap[resultId] = base
+                        })
+                        
+                        console.debug(`$${resultId} = OpAccessChain $${typeId} $${baseId} ${indexes}`)
                     }
-                    pos--
-                    heap[resultId] = base
-                    
-                    console.debug(`$${resultId} = OpAccessChain ${type.constructor.name} $${baseId} ${indexes}`)
                 break
                 // OpCompositeConstruct
                 case 80:
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    heap[resultId] = globalMemory.createVariable(type)
-                    constituents = []
-                    let i = 0
-                    for (pos++; pos < endPos; pos++) {
-                        constituents.push(code[pos])
-                        heap[resultId].setIndex(i, heap[code[pos]].read())
-                        i++
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        
+                        pos++
+                        let resultId = code[pos]
+                        
+                        let constituents: number[] = []
+                        for (pos++; pos < endPos; pos++) {
+                            constituents.push(code[pos])
+                        }
+                        pos--
+                        flow.push((execution: Execution) => {
+                            type = <Type> execution.heap[typeId]
+                            execution.heap[resultId] = globalMemory.createVariable(type)
+                            let i = 0
+                            constituents.forEach(c => {
+                                execution.heap[resultId].setIndex(i, execution.heap[c].read())
+                                i++
+                            })
+                        })
+                        console.debug(`$${resultId} = OpCompositeConstruct $${typeId} ${constituents}`)
                     }
-                    pos--
-                    
-                    console.debug(`$${resultId} = OpCompositeConstruct ${type} ${constituents}`)
                 break
                 // OpReturn
                 case 253:
@@ -757,30 +871,43 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
                 break;
                 // OpCompositeExtract
                 case 81:
-                    pos++
-                    typeId = code[pos]
-                    type = <Type> heap[typeId]
-                    pos++
-                    resultId = code[pos]
-                    pos++
-                    let compositeId = code[pos]
-                    let composite = heap[compositeId]
-                    indexes = []
-                    for (pos++; pos < endPos; pos++) {
-                        let index = code[pos]
-                        composite = composite.getIndex(index)
-                        indexes.push(index)
+                    {
+                        pos++
+                        let typeId = code[pos]
+                        
+                        pos++
+                        let resultId = code[pos]
+                        pos++
+                        let compositeId = code[pos]
+                        
+                        let indexes: number[] = []
+                        for (pos++; pos < endPos; pos++) {
+                            let index = code[pos]
+                            indexes.push(index)
+                        }
+                        pos--
+                        flow.push((execution: Execution) => {
+                            let type = <Type> execution.heap[typeId]
+                            let composite = execution.heap[compositeId]
+                            indexes.forEach(i => {
+                                composite = composite.getIndex(i)
+                            })
+                            execution.heap[resultId] = composite
+
+                        })
+                        console.debug(`$${resultId} = OpCompositeExtract ${typeId} $${compositeId} ${indexes}`)
                     }
-                    pos--
-                    heap[resultId] = composite
-                    console.debug(`$${resultId} = OpCompositeExtract ${type.constructor.name} $${compositeId} ${indexes}`)
                 break
                 // OpLabel
                 case 248:
-                    pos++
-                    resultId = code[pos]
-                    heap[resultId] = {currentFunction}
-                    console.debug(`$${resultId} = OpLabel`)
+                    {
+                        pos++
+                        let resultId = code[pos]
+                        flow.push((execution: Execution) => {
+                            execution.heap[resultId] = "noidea"
+                        })
+                        console.debug(`$${resultId} = OpLabel`)
+                    }
                 break
                 default:
                     console.debug(code[pos])
@@ -792,7 +919,8 @@ function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: Arr
         }
         pos++
     }
-    return outputMemory.float32View
+    execution.flow = flow
+    return execution
 }
 function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: ArrayBuffer) {
     let output = executeShader(vertexStage, inputBuffer)
