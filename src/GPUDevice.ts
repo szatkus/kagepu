@@ -11,12 +11,20 @@ import { GPURenderPipeline } from './GPURenderPipeline';
 import GPUCommandEncoder from './GPUCommandEncoder';
 import GPUBindGroup, { GPUBindGroupDescriptor } from './GPUBindGroup';
 import GPUQueue from './GPUQueue';
+import GPUError from './GPUError';
 import KQueue from './KQueue';
+
+enum GPUErrorFilter {
+  "none",
+  "out-of-memory",
+  "validation"
+};
 
 export default class {
   extensions = extensions
   limit = limits
   adapter: GPUAdapter
+  _filters: GPUErrorFilter[] = []
   constructor (adapter: GPUAdapter) {
     this.adapter = adapter
   }
@@ -54,6 +62,12 @@ export default class {
   }
   createCommandEncoder(descriptor?: any): GPUCommandEncoder {
     return new GPUCommandEncoder()
+  }
+  pushErrorScope(filter: GPUErrorFilter) {
+    this._filters.push(filter)
+  }
+  async popErrorScope(): Promise<GPUError | null> {
+    return null
   }
 
   getQueue(): GPUQueue {
