@@ -7,5 +7,9 @@
     "sourceRoot": "./src/",
     "rootDir": "./",
     "sourceMap": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "cts"
+  ]
 }
