@@ -28,8 +28,8 @@ export default class GPUCommandEncoder {
         return new KCommandBuffer(this._renderPasses)
     }
     copyBufferToBuffer(source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
-        let sourceView = new Uint8Array(source._data)
-        let destinationView = new Uint8Array(destination._data)
+        let sourceView = new Uint8Array(source._mapWrite())
+        let destinationView = new Uint8Array(destination._mapWrite())
         for (let i = 0; i < size; i++) {
             destinationView[destinationOffset + i] = sourceView[sourceOffset + i]
         }
