@@ -19,7 +19,7 @@ export interface GPUTexture {
 
 export class KTexture implements GPUTexture {
   _descriptor: GPUTextureDescriptor
-  _buffer: Uint32Array
+  _buffers: Array<Uint32Array> = []
 
   constructor(descriptor: GPUTextureDescriptor) {
     this._descriptor = {...{
@@ -29,14 +29,16 @@ export class KTexture implements GPUTexture {
       dimension: '2d',
     }, ...descriptor}
     if (
-      this._descriptor.arrayLayerCount! != 1 ||
-      this._descriptor.mipLevelCount! != 1 ||
-      this._descriptor.sampleCount! != 1 ||
       this._descriptor.dimension! != '2d'
       ) {
       dontKnow()
     }
-    this._buffer = new Uint32Array(this._descriptor.size.width! * this._descriptor.size.height! * this._descriptor.size.depth!)
+    // TODO: implement MSAA
+    // TODO: ...and mipmapping
+    for (let i = 0; i < this._descriptor.arrayLayerCount!; i++) {
+      this._buffers[i] = new Uint32Array(this._descriptor.size.width! * this._descriptor.size.height! * this._descriptor.size.depth!)
+    }
+     
   }
 
   createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {
@@ -103,8 +105,8 @@ export class KTexture implements GPUTexture {
     return 0
   }
 
-  _putPixel(pixel: number, x: number, y: number, z: number) {
-    this._buffer[z * this._descriptor.size.height! * this._descriptor.size.width! + y * this._descriptor.size.width! + x] = pixel
+  _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number = 0) {
+    this._buffers[arrayLevel][z * this._descriptor.size.height! * this._descriptor.size.width! + y * this._descriptor.size.width! + x] = pixel
   }
 
   destroy () {
