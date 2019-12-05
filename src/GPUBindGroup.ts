@@ -1,7 +1,7 @@
 import GPUSampler from "./GPUSampler";
-import GPUTextureView from "./GPUTextureView";
 import GPUBuffer from "./GPUBuffer";
 import { GPUObjectDescriptorBase, GPUBindGroupLayout } from "./interfaces";
+import { GPUTextureView } from "./textures";
 
 export type GPUBindingResource = GPUSampler | GPUTextureView | GPUBufferBinding
 

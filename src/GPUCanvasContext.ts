@@ -1,6 +1,7 @@
 import GPUDevice from "./GPUDevice";
-import { GPUExtent3D, GPUObjectDescriptorBase } from "./interfaces";
-import GPUTexture from "./GPUTexture";
+import { GPUObjectDescriptorBase } from "./interfaces";
+import { GPUTexture, GPUTextureView, GPUTextureViewDescriptor } from "./textures";
+import dontKnow from "./dontKnow";
 
 export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
     device: GPUDevice,
@@ -69,9 +70,21 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
     "depth24plus-stencil8"
 }
 
-export class Context2DTexture extends GPUTexture {
+export class Context2DTexture implements GPUTexture {
     constructor(public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
-        super()
+        
+    }
+
+    createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {
+        throw new Error("Method not implemented.");
+    }
+
+    _getPixelSize(): number {
+        throw new Error("Method not implemented.");
+    }
+    
+    _putPixel(pixel: number, x: number, y: number, z: number): void {
+        throw new Error("Method not implemented.");
     }
 }
 
