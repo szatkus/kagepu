@@ -25,6 +25,7 @@ export default class {
   limit = limits
   adapter: GPUAdapter
   _filters: GPUErrorFilter[] = []
+  public defaultQueue = new KQueue()
   constructor (adapter: GPUAdapter) {
     this.adapter = adapter
   }
@@ -69,8 +70,10 @@ export default class {
   async popErrorScope(): Promise<GPUError | null> {
     return null
   }
-
+  /*
+   * @deprecated
+   */
   getQueue(): GPUQueue {
-    return new KQueue()
+    return this.defaultQueue
   }
 }
