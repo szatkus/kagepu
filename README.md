@@ -3,11 +3,11 @@ kagepu - incomplete, incorrect and bug-ridden implementation of WebGPU over stan
 
 To get things working after installing npm modules as usual you just need to execute:
 
-`$ npx webpack-dev-server`
+`$ npm start`
 
 At the moment only `/examples/hello_triangle.html` works.
 
-Inject kagepu into existing WebGPU code you should declare these things in HTML:
+To inject kagepu into existing WebGPU code you should declare these things in HTML:
 ```
   <script src="../kagepu.js"></script>
   <script>

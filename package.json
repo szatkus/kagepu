@@ -16,6 +16,7 @@
     "webpack-dev-server": "^3.7.2"
   },
   "scripts": {
+    "start": "webpack-dev-server --liveReload=false",
     "test": "mocha -r ts-node/register test/*.ts"
   },
   "standard": {
