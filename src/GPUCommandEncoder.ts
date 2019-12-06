@@ -78,8 +78,6 @@ export default class GPUCommandEncoder {
         }
         if (
             source.offset! != 0 ||
-            destination.mipLevel! != 0 ||
-            destination.arrayLayer! != 0 ||
             destination.origin!.x! != 0 ||
             destination.origin!.y! != 0 ||
             destination.origin!.z! != 0
@@ -102,7 +100,7 @@ export default class GPUCommandEncoder {
             for (var y = 0; y < copySize.height!; y++) {
                 for (var z = 0; z < copySize.depth!; z++) {
                     let pixel = view[z * source.imageHeight * source.rowPitch + source.rowPitch * y + x]
-                    destination.texture._putPixel(pixel, x, y, z)
+                    destination.texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
                 }
             }
         }

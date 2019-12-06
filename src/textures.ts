@@ -14,20 +14,28 @@ export interface GPUTextureDescriptor {
 export interface GPUTexture {
   createView(descriptor: GPUTextureViewDescriptor): GPUTextureView
   _getPixelSize(): number,
-  _putPixel(pixel: number, x: number, y: number, z: number): void
+  _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
+}
+
+interface MipMap {
+  buffer: Uint32Array,
+  width: number,
+  height: number,
+  depth: number
 }
 
 export class KTexture implements GPUTexture {
   _descriptor: GPUTextureDescriptor
-  _buffers: Array<Uint32Array> = []
+  _buffers: Array<Array<MipMap>> = []
+  _mipLevelCount: number
 
   constructor(descriptor: GPUTextureDescriptor) {
     this._descriptor = {...{
       arrayLayerCount: 1,
-      mipLevelCount: 1,
       sampleCount: 1,
       dimension: '2d',
     }, ...descriptor}
+    this._mipLevelCount = descriptor.mipLevelCount || 1
     if (
       this._descriptor.dimension! != '2d'
       ) {
@@ -36,7 +44,22 @@ export class KTexture implements GPUTexture {
     // TODO: implement MSAA
     // TODO: ...and mipmapping
     for (let i = 0; i < this._descriptor.arrayLayerCount!; i++) {
-      this._buffers[i] = new Uint32Array(this._descriptor.size.width! * this._descriptor.size.height! * this._descriptor.size.depth!)
+      let buffer: Array<MipMap> = []
+      this._buffers.push(buffer)
+      let width = this._descriptor.size.width!
+      let height = this._descriptor.size.height!
+      let depth = this._descriptor.size.depth!
+      for (let m = 0; m < this._mipLevelCount; m++) {
+        buffer[m] = {
+          buffer: new Uint32Array(width * height * depth),
+          width,
+          height,
+          depth
+        }
+        width = Math.max(Math.floor(width / 2), 1)
+        height = Math.max(Math.floor(height / 2), 1)
+        depth = Math.max(Math.floor(depth / 2), 1)
+      }
     }
      
   }
@@ -105,8 +128,9 @@ export class KTexture implements GPUTexture {
     return 0
   }
 
-  _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number = 0) {
-    this._buffers[arrayLevel][z * this._descriptor.size.height! * this._descriptor.size.width! + y * this._descriptor.size.width! + x] = pixel
+  _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number = 0, mipLevel: number = 0) {
+    let mipmap = this._buffers[arrayLevel][mipLevel]
+    mipmap.buffer[z * mipmap.height * mipmap.width + y * mipmap.width + x] = pixel
   }
 
   destroy () {
@@ -135,13 +159,7 @@ export class GPUTextureView {
         baseArrayLayer: 0,
         arrayLayerCount: 0
       }, ...descriptor }
-      if (
-        this._descriptor.baseMipLevel! != 0 || 
-        this._descriptor.mipLevelCount! != 0 || 
-        this._descriptor.baseArrayLayer! != 0 || 
-        this._descriptor.arrayLayerCount! != 0 || 
-        this._descriptor.aspect! != 'all'
-        ) {
+      if (this._descriptor.aspect! != 'all') {
         dontKnow()
       }
     }
