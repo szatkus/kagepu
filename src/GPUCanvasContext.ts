@@ -76,7 +76,7 @@ export class Context2DTexture implements GPUTexture {
     }
 
     createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {
-        throw new Error("Method not implemented.");
+        return new GPUTextureView(this, descriptor)
     }
 
     _getPixelSize(): number {

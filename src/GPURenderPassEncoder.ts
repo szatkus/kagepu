@@ -72,14 +72,18 @@ export class GPURenderPassEncoder {
             args: [pipeline]
         })
     }
-    setVertexBuffers(startSlot: number, buffers: Array<GPUBuffer>, offsets: Array<number>) {
+    setIndexBuffer(buffer: GPUBuffer, offset: number = 0) {
         this._checkState()
-        if (startSlot != 0 || offsets.length != 1 || offsets[0] != 0) {
-            dontKnow()
-        }
         this._commands.push({
-            name: 'setVertexBuffers',
-            args: [startSlot, buffers, offsets]
+            name: 'setIndexBuffer',
+            args: [buffer, offset]
+        })
+    }
+    setVertexBuffer(slot: number, buffer: GPUBuffer, offset: number) {
+        this._checkState()
+        this._commands.push({
+            name: 'setVertexBuffer',
+            args: [slot, buffer, offset]
         })
     }
     draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
@@ -90,6 +94,13 @@ export class GPURenderPassEncoder {
         this._commands.push({
             name: 'draw',
             args: [vertexCount, instanceCount, firstVertex, firstInstance]
+        });
+    }
+    drawIndexed(indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
+        this._checkState()
+        this._commands.push({
+            name: 'drawIndexed',
+            args: [indexCount, instanceCount, firstIndex, baseVertex, firstInstance]
         });
     }
     // GPUProgrammablePassEncoder
@@ -109,7 +120,7 @@ export class GPURenderPassEncoder {
     }
     _checkState() {
         if (this._isFinished) {
-            new Error('Pass is finished.')
+            throw new Error('Pass is finished.')
         }
     }
 }
