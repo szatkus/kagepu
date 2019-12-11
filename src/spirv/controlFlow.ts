@@ -5,8 +5,13 @@ export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
         // OpReturn
         case 253:
-            state.consumeWord()
             console.debug('OpReturn')
+            state.processed = true
+        break;
+        // OpReturnValue
+        case 254:
+            let valueId = state.consumeWord()
+            console.debug('OpReturn ${valueId}')
             state.processed = true
         break;
         // OpLabel

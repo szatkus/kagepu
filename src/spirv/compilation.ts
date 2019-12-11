@@ -8,6 +8,9 @@ import { compile as memoryCompile } from "./memory"
 import { compile as functionsCompile } from "./functions"
 import { compile as compositesCompile } from "./composites"
 import { compile as controlFlowCompile } from "./controlFlow"
+import { compile as multiplicationCompile } from "./multiplication"
+import { compile as vectorsCompile } from "./vectors"
+import { compile as additionCompile } from "./addition"
 
 export type CodeStream = Uint32Array
 
@@ -89,6 +92,9 @@ export function compile(code: CodeStream) {
             functionsCompile(state, module)
             compositesCompile(state, module)
             controlFlowCompile(state, module)
+            multiplicationCompile(state, module)
+            vectorsCompile(state, module)
+            additionCompile(state, module)
 
             // processing an instruction should change state of the program counter, otherwise it means that instruction is not supported
             if (!state.processed) {
