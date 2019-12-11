@@ -34,6 +34,9 @@ export class Execution {
         if (storageClass === 1) {
             return this.inputMemory!
         }
+        if (storageClass === 2) {
+            return this.globalMemory
+        }
         if (storageClass === 3) {
             return this.outputMemory
         }
