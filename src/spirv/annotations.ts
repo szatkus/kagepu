@@ -13,6 +13,14 @@ class Builtin {
     constructor(public value: number) {}
 }
 
+class DescriptorSet {
+    constructor(public value: number) {}
+}
+
+class Binding {
+    constructor(public value: number) {}
+}
+
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
         // OpDecorate
@@ -28,23 +36,39 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 decoration = new ArrayStride(state.consumeWord())
             } else if (decorationCode == 30) {
                 decoration = new Location(state.consumeWord())
+            } else if (decorationCode == 33) {
+                decoration = new Binding(state.consumeWord())
+            } else if (decorationCode == 34) {
+                decoration = new DescriptorSet(state.consumeWord())
             } else {
                 dontKnow()
             }
             module.decorations[targetId] = module.decorations[targetId] ? module.decorations[targetId].push(decoration) : [decoration]
             console.debug(`decorate ${targetId} with ${decorationCode}`)
+            state.processed = true
         break
         // OpMemberDecorate
         case 72:
             {
                 let typeId = state.consumeWord()
                 let memberNumber = state.consumeWord()
-                if (state.consumeWord() == 11) {
-                    //(members[memberNumber] as any).builtin = code[pos]
+                let decoration = state.consumeWord()
+                if (decoration == 11) {
+                    console.debug(`${memberNumber} Builtin ${state.consumeWord()}`)
+                } else if (decoration == 35) {
+                    console.debug(`${memberNumber} offset ${state.consumeWord()}`)
+                } else if (decoration == 5) {
+                    console.debug(`${memberNumber} ColMajor`)
+                } else if (decoration == 7) {
+                    console.debug(`${memberNumber} MatrixStride ${state.consumeWord()}`)
                 } else {
                     dontKnow()
                 }
-                console.debug(`OpMemberDecorate ${memberNumber}`)
+                if (state.pos != state.endPos) {
+                    dontKnow()
+                }
+                //console.debug(`OpMemberDecorate ${memberNumber}`)
+                state.processed = true
             }
         break
     }

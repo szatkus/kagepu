@@ -162,6 +162,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpVariable ${typeId} ${storageClass}`)
+                state.processed = true
             }
         break
         // OpLoad
@@ -176,6 +177,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = execution.heap[loadId]
                 })
                 console.debug(`$${resultId} = OpLoad ${typeId} $${loadId}`)
+                state.processed = true
             }
         break
         // OpStore
@@ -191,6 +193,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     pointer.write(data)
                 })
                 console.debug(`OpStore $${pointerId} $${objectId}`)
+                state.processed = true
             }
         break
         // OpAccessChain
@@ -211,6 +214,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 })
                 
                 console.debug(`$${resultId} = OpAccessChain $${typeId} $${baseId} ${indexes}`)
+                state.processed = true
             }
         break
     }

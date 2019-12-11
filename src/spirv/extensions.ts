@@ -12,6 +12,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = name
                 })
                 console.debug(`OpExtInstImport ${name}`)
+                state.processed = true
             }
         break
     }

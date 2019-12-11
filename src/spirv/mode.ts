@@ -1,5 +1,4 @@
 import { CompilationState, CompiledModule } from "./compilation";
-import { Execution } from "./execution";
 import dontKnow from "../dontKnow";
 
 const CAPABILITY_SHADER = 1
@@ -11,8 +10,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
             let addressingModel = state.consumeWord()
             let memoryModel = state.consumeWord()
             console.debug(`OpMemoryModel ${addressingModel} ${memoryModel}`)
+            state.processed = true
         break
-    
         // OpEntryPoint
         case 15:
             let executionModel = state.consumeWord()
@@ -21,12 +20,14 @@ export function compile (state: CompilationState, module: CompiledModule) {
             let interfaces = state.consumeArray()
             //if (vertexStage.entryPoint !== name) dontKnow()
             console.debug(`OpEntryPoint ${executionModel} $${entryPoint} ${name} ${interfaces}`)
+            state.processed = true
         break
         // OpExecutionMode
         case 16:
             entryPoint = state.consumeWord()
             let executionMode = state.consumeWord()
             console.debug(`OpExecutionMode ${entryPoint} ${executionMode}`)
+            state.processed = true
         break
         // OpCapability
         case 17:
@@ -35,6 +36,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 dontKnow()
             }
             console.debug(`OpCapability ${capability}`)
+            state.processed = true
         break
     }
 }

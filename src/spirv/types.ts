@@ -9,7 +9,7 @@ export class Type {
 export class TypeVoid extends Type {}
 
 export class TypeFunction extends Type {
-    constructor(public type: Type) {
+    constructor(public type: Type, public types: Array<Type>) {
         super()
     }
 }
@@ -100,6 +100,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeVoid
                 })
                 console.debug(`$${resultId} = OpTypeVoid`)
+                state.processed = true
             }
         break
         // OpTypeInt
@@ -112,6 +113,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeInt(width, signed)
                 })
                 console.debug(`$${resultId} = OpTypeInt ${width}  ${signed}`)
+                state.processed = true
             }
         break
         // OpTypeFloat
@@ -123,6 +125,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeFloat(width)
                 })
                 console.debug(`$${resultId} = OpTypeFloat ${width}`)
+                state.processed = true
             }
         break
         // OpTypeVector
@@ -136,6 +139,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeVector(type, count)
                 })
                 console.debug(`$${resultId} = OpTypeVector $${typeId} ${count}`)
+                state.processed = true
             }
         break
         // OpTypeMatrix
@@ -149,6 +153,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeMatrix(type, count)
                 })
                 console.debug(`$${resultId} = OpTypeVector $${typeId} ${count}`)
+                state.processed = true
             }
         break
         // OpTypeArray
@@ -162,6 +167,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeArray(type, count)
                 })
                 console.debug(`$${resultId} = OpTypeArray $${typeId} ${count}`)
+                state.processed = true
             }
         break
         // OpTypeStruct
@@ -174,6 +180,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeStruct(types)
                 })
                 console.debug(`$${resultId} = OpTypeStruct ${typeIds}`)
+                state.processed = true
             }
         break
         // OpTypePointer
@@ -187,19 +194,21 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypePointer(storageClass, type)
                 })
                 console.debug(`$${resultId} = OpTypePointer ${storageClass} $${typeId}`)
+                state.processed = true
             }
         break
         // OpTypeFunction
         case 33:
             {
-                if (state.wordCount > 3) dontKnow()
                 let resultId = state.consumeWord()
                 let typeId = state.consumeWord()
+                let argumentsIds = state.consumeArray()
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeFunction(type)
+                    execution.heap[resultId] = new TypeFunction(type, argumentsIds.map(id => <Type> execution.heap[id]))
                 })
                 console.debug(`$${resultId} = OpTypeFunction $${typeId}`)
+                state.processed = true
             }
         break
     }

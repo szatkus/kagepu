@@ -24,6 +24,7 @@ export class CompilationState {
     wordCount: number = 0
     startPos: number = 0
     endPos: number = 0
+    processed: boolean = false
     constructor(readonly code: CodeStream, public module: CompiledModule) {}
 
     consumeString(): String {
@@ -74,6 +75,7 @@ export function compile(code: CodeStream) {
             state.startPos = state.pos
             state.endPos = state.startPos + state.wordCount
             state.pos++
+            state.processed = false
 
             // instructions are grouped in the same way as in the specification
             // https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html#_a_id_instructions_a_instructions
@@ -89,7 +91,7 @@ export function compile(code: CodeStream) {
             controlFlowCompile(state, module)
 
             // processing an instruction should change state of the program counter, otherwise it means that instruction is not supported
-            if (state.pos == state.startPos) {
+            if (!state.processed) {
                 console.debug(code[state.pos])
                 console.debug(code[state.pos + 1])
                 console.debug(code[state.pos + 2])

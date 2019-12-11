@@ -23,6 +23,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     }
                 })
                 console.debug(`$${resultId} = OpFunction $${functionTypeId} $${returnTypeId} ${functionControl}`)
+                state.processed = true
             }
         break
         

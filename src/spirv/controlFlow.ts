@@ -7,6 +7,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         case 253:
             state.consumeWord()
             console.debug('OpReturn')
+            state.processed = true
         break;
         // OpLabel
         case 248:
@@ -16,6 +17,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = "noidea"
                 })
                 console.debug(`$${resultId} = OpLabel`)
+                state.processed = true
             }
         break
     }

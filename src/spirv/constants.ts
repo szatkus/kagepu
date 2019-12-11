@@ -20,6 +20,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)
+                state.processed = true
             }
         break
         // OpConstantComposite
@@ -33,6 +34,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new ConstantComposite(type, constituents)
                 })
                 console.debug(`$${resultId} = OpConstantComposite $${typeId} ${constituents}`)
+                state.processed = true
             }
         break
     }

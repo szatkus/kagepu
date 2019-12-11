@@ -21,6 +21,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     })
                 })
                 console.debug(`$${resultId} = OpCompositeConstruct $${typeId} ${constituents}`)
+                state.processed = true
             }
         break
         // OpCompositeExtract
@@ -40,6 +41,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
 
                 })
                 console.debug(`$${resultId} = OpCompositeExtract ${typeId} $${compositeId} ${indexes}`)
+                state.processed = true
             }
         break
     }
