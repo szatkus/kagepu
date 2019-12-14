@@ -3,6 +3,15 @@ import { Execution } from "./execution";
 import { Type } from "./types";
 import dontKnow from "../dontKnow";
 
+export interface FunctionDeclaration {
+    functionType: Type
+    returnType: Type
+    functionControl: number
+    body: Array<Function>
+}
+
+export class FunctionEnd {}
+
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
         // OpFunction
@@ -20,8 +29,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = {
                         functionType,
                         returnType,
-                        functionControl
+                        functionControl,
+                        body: []
                     }
+                    execution.inFunction = resultId
                 })
                 console.debug(`$${resultId} = OpFunction $${functionTypeId} $${returnTypeId} ${functionControl}`)
                 state.processed = true
@@ -45,6 +56,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         case 56:
             {
                 console.debug(`FunctionEnd`)
+                module.flow.push(new FunctionEnd())
                 state.processed = true
             }
         break
@@ -58,7 +70,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 
                 //if (entryPoint != resultId) dontKnow()
                 module.flow.push((execution: Execution) => {
-                    dontKnow()
+                    let func = execution.heap[functionId]
+                    execution.callFunction(func)
                 })
                 console.debug(`$${resultId} = OpFunctionCall $${functionId}`)
                 state.processed = true

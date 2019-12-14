@@ -3,6 +3,7 @@ import dontKnow from "../dontKnow"
 import { GPUPipelineStageDescriptor } from "../interfaces"
 import { CompiledModule, compile } from "./compilation"
 import { VertexInputs } from "../KQueue"
+import { FunctionDeclaration, FunctionEnd } from "./functions"
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -11,6 +12,8 @@ export class Execution {
     heap: any[] = []
     private functionMemory: Memory
     private globalMemory: Memory
+    inFunction: number = 0
+    private functions: Map<Number, FunctionDeclaration> = new Map()
 
     private constructor(private inputMemory: Memory, private outputMemory: Memory) {
         if (functionMemoryPool.length > 0) {
@@ -27,8 +30,23 @@ export class Execution {
         }
     }
 
-    private run(module: CompiledModule) {
-        module.flow.forEach(f => f(this))
+    private prerun(module: CompiledModule) {
+        for (let i = 0; i < module.flow.length; i++) {
+            let func = module.flow[i]
+            if (func instanceof Function) {
+                func(this)
+            }
+            if (this.inFunction !== 0) {
+                let currentFunction = <FunctionDeclaration> this.heap[this.inFunction]
+                i++
+                while (module.flow[i] && !(module.flow[i] instanceof FunctionEnd)) {
+                    currentFunction.body.push(<Function> module.flow[i])
+                    i++
+                } 
+                this.functions.set(this.inFunction, currentFunction)
+                this.inFunction = 0
+            }
+        }
     }
 
     getMemorySubsystem(storageClass: number): Memory {
@@ -51,11 +69,18 @@ export class Execution {
         return this.globalMemory
     }
 
-    static start(input: Memory, output: Memory, module: CompiledModule) {
+    static start(input: Memory, output: Memory, module: CompiledModule, entryPoint: string) {
         let execution = new Execution(input, output)
-        execution.run(module)
+        execution.prerun(module)
+        let startFunction = execution.functions.get(module.entryPoints.get(entryPoint)!)!
+        execution.callFunction(startFunction)
         functionMemoryPool.push(execution.functionMemory)
         globalMemoryPool.push(execution.globalMemory)
+    }
+    callFunction(func: FunctionDeclaration) {
+        for (let i = 0; i < func.body.length; i++) {
+            func.body[i](this)
+        }
     }
 }
 
@@ -71,6 +96,6 @@ export function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuff
     }
     let inputMemory = new InputMemory(inputBuffer, compiled.decorations)
     let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
-    Execution.start(inputMemory, outputMemory, compiled)
+    Execution.start(inputMemory, outputMemory, compiled, vertexStage.entryPoint)
     return outputMemory.float32View
 }

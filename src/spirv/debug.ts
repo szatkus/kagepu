@@ -1,4 +1,5 @@
 import { CompilationState, CompiledModule } from "./compilation";
+import { Execution } from "./execution";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -33,8 +34,11 @@ export function compile (state: CompilationState, module: CompiledModule) {
         case 7:
             {
                 let resultId = state.consumeWord()
-                module.heap[resultId] = state.consumeString()
-                console.debug(`$${resultId} = OpString ` + module.heap[resultId].toString())
+                let string = state.consumeString()
+                module.flow.push((execution: Execution) => {
+                    execution.heap[resultId] = string
+                })
+                console.debug(`$${resultId} = OpString ${string}`)
                 state.processed = true
             }
         break

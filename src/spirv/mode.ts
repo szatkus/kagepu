@@ -18,9 +18,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
             let entryPoint = state.consumeWord()
             let name = state.consumeString()
             let interfaces = state.consumeArray()
-            //if (vertexStage.entryPoint !== name) dontKnow()
             console.debug(`OpEntryPoint ${executionModel} $${entryPoint} ${name} ${interfaces}`)
             state.processed = true
+            module.entryPoints.set(name, entryPoint)
         break
         // OpExecutionMode
         case 16:

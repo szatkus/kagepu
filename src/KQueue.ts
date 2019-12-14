@@ -23,20 +23,40 @@ export default class KQueue implements GPUQueue {
     _vertexBuffers: ArrayBuffer[] = []
     _passDescriptor?: GPURenderPassDescriptor
     _bindGroups: GPUBindGroup[] = []
-    submit(buffers: Array<KCommandBuffer>) {
-        //console.profile()
+    async submit(buffers: Array<KCommandBuffer>) {
         for (let commandBuffer of buffers) {
-            this._processRenderPasses(commandBuffer._renderPasses)
+            await this._processRenderPasses(commandBuffer._renderPasses)
         }
-        //console.profileEnd()
     }
-    _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
+    async _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
         for (let pass of renderPasses) {
             this._passDescriptor = pass._descriptor
+            await this._runRenderPass(pass)
             for (let command of pass._commands) {
-                this._executeCommand(command)
+                
             }
         }
+    }
+    async _runRenderPass(pass: GPURenderPassEncoder) {
+        return new Promise((resolve, reject) => {
+            // we don't want to hung a browser
+            let commands = pass._commands
+            let i = 0
+            if (commands.length === 0) {
+                return resolve()
+            }
+            let run = () => {
+                let command = commands[i]
+                this._executeCommand(command)
+                i++
+                if (i < commands.length) {
+                    setTimeout(run, 1)
+                } else {
+                    resolve()
+                }
+            }
+            setTimeout(run, 1)
+        })
     }
     _executeCommand(command: KCommand) {
         let methodName = '__command__' + command.name

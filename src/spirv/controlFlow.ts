@@ -11,7 +11,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpReturnValue
         case 254:
             let valueId = state.consumeWord()
-            console.debug('OpReturn ${valueId}')
+            console.debug(`OpReturn ${valueId}`)
             state.processed = true
         break;
         // OpLabel

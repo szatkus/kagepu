@@ -5,7 +5,7 @@ import { compile as modeSettingCompile } from "./mode"
 import { compile as typeSettingCompile } from "./types"
 import { compile as constantsCompile } from "./constants"
 import { compile as memoryCompile } from "./memory"
-import { compile as functionsCompile } from "./functions"
+import { compile as functionsCompile, FunctionEnd } from "./functions"
 import { compile as compositesCompile } from "./composites"
 import { compile as controlFlowCompile } from "./controlFlow"
 import { compile as multiplicationCompile } from "./multiplication"
@@ -17,8 +17,8 @@ export type CodeStream = Uint32Array
 export class CompiledModule {
     names: String[] = []
     decorations = new Decorations()
-    heap: any[] = []
-    flow: Function[] = []
+    flow: (Function | FunctionEnd)[] = []
+    entryPoints: Map<String, number> = new Map()
 }
 
 export class CompilationState {
