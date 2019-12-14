@@ -1,5 +1,8 @@
 import { GPUBufferDescriptor } from './interfaces'
 import { GPUBufferUsage } from './constants'
+import dontKnow from './dontKnow';
+
+export type GPUBufferSize = number;
 
 export default class {
   _data: ArrayBuffer | undefined
@@ -15,9 +18,19 @@ export default class {
     }
     this._usage = descriptor.usage
   }
-  setSubData (offset: number, data: ArrayBuffer) {
+  // deprecated
+  setSubData (offset: number, data: ArrayBuffer, srcOffset: number = 0, length: number = 0) {
     if (this._error) {
       throw this._error
+    }
+    if (!(data instanceof ArrayBuffer)) {
+      data = (data as any).buffer
+    }
+    if (length === 0) {
+      length = this._data!.byteLength
+    }
+    if (srcOffset !== 0 || length != this._data!.byteLength) {
+      dontKnow()
     }
     if (!(this._usage & GPUBufferUsage.TRANSFER_DST)) {
       // ERROR: validation error
