@@ -8,12 +8,21 @@ import { FunctionDeclaration, FunctionEnd } from "./functions"
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
 
+interface Frame {
+    func: FunctionDeclaration
+    args: any[]        
+}
+
 export class Execution {
+    
     heap: any[] = []
     private functionMemory: Memory
     private globalMemory: Memory
     inFunction: number = 0
     private functions: Map<Number, FunctionDeclaration> = new Map()
+    currentFrame?: Frame
+    frames: Array<Frame> = []
+    returnedValue: any
 
     private constructor(private inputMemory: Memory, private outputMemory: Memory) {
         if (functionMemoryPool.length > 0) {
@@ -77,10 +86,16 @@ export class Execution {
         functionMemoryPool.push(execution.functionMemory)
         globalMemoryPool.push(execution.globalMemory)
     }
-    callFunction(func: FunctionDeclaration) {
+    callFunction(func: FunctionDeclaration, args: any[] = []) {
+        this.currentFrame = {
+            func,
+            args
+        }
+        this.frames.push(this.currentFrame)
         for (let i = 0; i < func.body.length; i++) {
             func.body[i](this)
         }
+        return this.returnedValue
     }
 }
 

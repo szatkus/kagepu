@@ -16,7 +16,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
                     let pointer = execution.getGlobalMemory().createVariable(type, resultId)
-                    execution.getGlobalMemory().writeUint32(pointer, value)
+                    pointer.writeUint32(value)
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)

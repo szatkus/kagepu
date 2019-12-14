@@ -11,6 +11,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpReturnValue
         case 254:
             let valueId = state.consumeWord()
+            module.flow.push((execution: Execution) => {
+                execution.returnedValue = execution.heap[valueId]
+            })
             console.debug(`OpReturn ${valueId}`)
             state.processed = true
         break;

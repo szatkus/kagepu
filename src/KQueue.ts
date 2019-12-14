@@ -32,9 +32,6 @@ export default class KQueue implements GPUQueue {
         for (let pass of renderPasses) {
             this._passDescriptor = pass._descriptor
             await this._runRenderPass(pass)
-            for (let command of pass._commands) {
-                
-            }
         }
     }
     async _runRenderPass(pass: GPURenderPassEncoder) {
@@ -46,13 +43,17 @@ export default class KQueue implements GPUQueue {
                 return resolve()
             }
             let run = () => {
-                let command = commands[i]
-                this._executeCommand(command)
-                i++
-                if (i < commands.length) {
-                    setTimeout(run, 1)
-                } else {
-                    resolve()
+                try {
+                    let command = commands[i]
+                    this._executeCommand(command)
+                    i++
+                    if (i < commands.length) {
+                        setTimeout(run, 1)
+                    } else {
+                        resolve()
+                    }
+                } catch (e) {
+                    reject(e)
                 }
             }
             setTimeout(run, 1)
@@ -169,10 +170,8 @@ export default class KQueue implements GPUQueue {
                     length: descriptor.arrayStride
                 }
             }
-            console.debug(vertexStage.entryPoint)
-            console.debug(vertexStage.module)
-            console.debug(new Float32Array(inputBuffer))
             verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, inputs)
+            debugger
         }
     }
 }

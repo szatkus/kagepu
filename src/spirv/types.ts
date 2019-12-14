@@ -156,7 +156,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let type = <TypeVector> execution.heap[typeId]
                     execution.heap[resultId] = new TypeMatrix(type, count)
                 })
-                console.debug(`$${resultId} = OpTypeVector $${typeId} ${count}`)
+                console.debug(`$${resultId} = OpTypeMatrix $${typeId} ${count}`)
                 state.processed = true
             }
         break

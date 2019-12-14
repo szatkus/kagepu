@@ -16,14 +16,29 @@ export class Pointer {
         return Array.from(this.memory.read(this))
     }
 
-    readFloat32Array(): number[] {
-        return Array.from(this.memory.read(this))
+    readFloat32Array(): Float32Array {
+        return this.memory.readFloat32Array(this.address, this.type.getSize())
+    }
+
+    readFloat32(): number {
+        return this.memory.readFloat32(this.address)
+    }
+
+    readInt32(): number {
+        return this.memory.readInt32(this.address)
+    }
+
+    readUint32(): number {
+        return this.memory.readUint32(this.address)
     }
 
     readValue(): number {
-        let data = this.read()
-        if (this.type instanceof TypeInt && this.type.width == 32 && this.type.signed) {
-            return data[0] + data[1] * 0xff + data[1] * 0xffff + data[1] * 0xffffff
+        if (this.type instanceof TypeInt && this.type.width == 32) {
+            if (this.type.signed) {
+                return this.readInt32()
+            } else {
+                return this.readUint32()
+            }
         }
         dontKnow()
         return 0
@@ -55,6 +70,10 @@ export class Pointer {
 
     write(data: number[]) {
         this.memory.write(this, data)
+    }
+
+    writeUint32(value: number) {
+        this.memory.writeUint32(this.address, value)
     }
 }
 
@@ -100,10 +119,21 @@ export class Memory {
         return this.uint8View.slice(pointer.address, pointer.address + pointer.type.getSize())
     }
 
-    readFloat32Array(pointer: Pointer): Float32Array {
-        return this.float32View.slice(pointer.address, pointer.address + pointer.type.getSize())
+    readFloat32Array(address: number, length: number): Float32Array {
+        return this.float32View.slice(address / 4, (address + length) / 4)
     }
 
+    readFloat32(address: number): number {
+        return this.float32View[address / 4]
+    }
+
+    readInt32(address: number): number {
+        return this.int32View[address / 4]
+    }
+
+    readUint32(address: number): number {
+        return this.uint32View[address / 4]
+    }
 
     write(pointer: Pointer, data: number[]) {
         if (data.length > pointer.type.getSize()) dontKnow()
@@ -112,8 +142,8 @@ export class Memory {
         }
     }
 
-    writeUint32(pointer: Pointer, value: number) {
-        this.uint32View[pointer.address / 4] = value
+    writeUint32(address: number, value: number) {
+        this.uint32View[address / 4] = value
     }
 }
 
@@ -139,7 +169,7 @@ export class InputMemory extends Memory {
         throw new Error("Input memory is read-only.")
     }
 
-    writeUint32(pointer: Pointer, value: number) {
+    writeUint32(address: number, value: number) {
         throw new Error("Input memory is read-only.")
     }
 

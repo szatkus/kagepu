@@ -22,7 +22,6 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let functionControl = state.consumeWord()
                 let functionTypeId = state.consumeWord()
                 
-                //if (entryPoint != resultId) dontKnow()
                 module.flow.push((execution: Execution) => {
                     let returnType = <Type> execution.heap[returnTypeId]
                     let functionType = <Type> execution.heap[functionTypeId]
@@ -44,9 +43,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let returnTypeId = state.consumeWord()
                 let resultId = state.consumeWord()
                 
-                //if (entryPoint != resultId) dontKnow()
                 module.flow.push((execution: Execution) => {
-                    dontKnow()
+                    let parameter = execution.currentFrame!.args.shift()
+                    execution.heap[resultId] = parameter
                 })
                 console.debug(`$${resultId} = OpFunctionParameter`)
                 state.processed = true
@@ -66,12 +65,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let returnTypeId = state.consumeWord()
                 let resultId = state.consumeWord()
                 let functionId = state.consumeWord()
-                let args = state.consumeArray()
+                let argsIds = state.consumeArray()
                 
-                //if (entryPoint != resultId) dontKnow()
                 module.flow.push((execution: Execution) => {
                     let func = execution.heap[functionId]
-                    execution.callFunction(func)
+                    let result = execution.callFunction(func, argsIds.map(i => execution.heap[i]))
+                    execution.heap[resultId] = result
                 })
                 console.debug(`$${resultId} = OpFunctionCall $${functionId}`)
                 state.processed = true
