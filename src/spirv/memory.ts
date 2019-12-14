@@ -1,5 +1,5 @@
 import dontKnow from "../dontKnow"
-import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer } from "./types"
+import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatrix } from "./types"
 import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 import { VertexInputs } from "../KQueue"
@@ -40,6 +40,10 @@ export class Pointer {
                 address += this.type.members[i].getSize()
             }
             return new Pointer(this.memory, address, this.type.members[index])
+        }
+        if (this.type instanceof TypeMatrix) {
+            let address = this.address + this.type.vectorType.getSize() * index
+            return new Pointer(this.memory, address, this.type.vectorType)
         }
         dontKnow()
         return this
