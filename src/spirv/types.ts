@@ -38,12 +38,16 @@ export class TypeVector extends Type {
 }
 
 export class TypeMatrix extends Type {
-    constructor(public type: Type, public count: number) {
+    rows: number
+    type: Type
+    constructor(public vectorType: TypeVector, public columns: number) {
         super()
+        this.rows = vectorType.count
+        this.type = vectorType.type
     }
 
     getSize(): number {
-        return this.type.getSize() * this.count
+        return this.vectorType.getSize() * this.columns
     }
 }
 
@@ -149,7 +153,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let count = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
+                    let type = <TypeVector> execution.heap[typeId]
                     execution.heap[resultId] = new TypeMatrix(type, count)
                 })
                 console.debug(`$${resultId} = OpTypeVector $${typeId} ${count}`)

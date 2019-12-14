@@ -16,6 +16,10 @@ export class Pointer {
         return Array.from(this.memory.read(this))
     }
 
+    readFloat32Array(): number[] {
+        return Array.from(this.memory.read(this))
+    }
+
     readValue(): number {
         let data = this.read()
         if (this.type instanceof TypeInt && this.type.width == 32 && this.type.signed) {
@@ -90,6 +94,10 @@ export class Memory {
 
     read(pointer: Pointer): Uint8Array {
         return this.uint8View.slice(pointer.address, pointer.address + pointer.type.getSize())
+    }
+
+    readFloat32Array(pointer: Pointer): Float32Array {
+        return this.float32View.slice(pointer.address, pointer.address + pointer.type.getSize())
     }
 
 
