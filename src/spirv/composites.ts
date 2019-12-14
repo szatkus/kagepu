@@ -13,7 +13,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let constituents = state.consumeArray()
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = execution.getGlobalMemory().createVariable(type)
+                    execution.heap[resultId] = execution.getGlobalMemory().createVariable(type, resultId)
                     let i = 0
                     constituents.forEach(c => {
                         execution.heap[resultId].setIndex(i, execution.heap[c].read())

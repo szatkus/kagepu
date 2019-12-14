@@ -15,7 +15,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let value = state.consumeWord()
                 module.flow.push((execution: Execution) => {
                     let type = <Type> execution.heap[typeId]
-                    let pointer = execution.getGlobalMemory().createVariable(type)
+                    let pointer = execution.getGlobalMemory().createVariable(type, resultId)
                     execution.getGlobalMemory().writeUint32(pointer, value)
                     execution.heap[resultId] = pointer
                 })

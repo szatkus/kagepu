@@ -2,6 +2,7 @@ import { Memory, InputMemory } from "./memory"
 import dontKnow from "../dontKnow"
 import { GPUPipelineStageDescriptor } from "../interfaces"
 import { CompiledModule, compile } from "./compilation"
+import { VertexInputs } from "../KQueue"
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -58,9 +59,7 @@ export class Execution {
     }
 }
 
-export function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: ArrayBuffer) {
-    let inputMemory = new InputMemory(inputBuffer)
-    let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
+export function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: VertexInputs) {
     if (!vertexStage.module._spirvCode) {
         dontKnow()
     }
@@ -70,6 +69,8 @@ export function executeShader(vertexStage: GPUPipelineStageDescriptor, inputBuff
         compiled = compile(code)
         vertexStage.module._compiled = compiled
     }
+    let inputMemory = new InputMemory(inputBuffer, compiled.decorations)
+    let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
     Execution.start(inputMemory, outputMemory, compiled)
     return outputMemory.float32View
 }

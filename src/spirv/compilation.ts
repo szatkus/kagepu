@@ -1,5 +1,5 @@
 import { compile as debugCompile } from "./debug"
-import { compile as annotationsCompile } from "./annotations"
+import { compile as annotationsCompile, Decorations } from "./annotations"
 import { compile as extensionsCompile } from "./extensions"
 import { compile as modeSettingCompile } from "./mode"
 import { compile as typeSettingCompile } from "./types"
@@ -16,7 +16,7 @@ export type CodeStream = Uint32Array
 
 export class CompiledModule {
     names: String[] = []
-    decorations: any[] = []
+    decorations = new Decorations()
     heap: any[] = []
     flow: Function[] = []
 }

@@ -1,24 +1,43 @@
 import { CompilationState, CompiledModule } from "./compilation";
 import dontKnow from "../dontKnow";
 
-export class ArrayStride {
+interface Decoration {
+
+}
+
+export class ArrayStride implements Decoration {
     constructor(public stride: Number) {}
 }
 
-class Location {
+export class Location implements Decoration {
     constructor(public value: number) {}
 }
 
-class Builtin {
+class Builtin implements Decoration {
     constructor(public value: number) {}
 }
 
-class DescriptorSet {
+class DescriptorSet implements Decoration {
     constructor(public value: number) {}
 }
 
-class Binding {
+class Binding implements Decoration {
     constructor(public value: number) {}
+}
+
+export class Decorations {
+    decorations: Array<Array<Decoration>> = []
+
+    putDecoration(index: number, decoration: Decoration) {
+        if (!this.decorations[index]) {
+            this.decorations[index] = []
+        }
+        this.decorations[index].push(decoration)
+    }
+
+    getSingleDecoration<T extends Decoration>(index: number, clazz: Function): T {
+        return <T> this.decorations[index].filter(e => e instanceof clazz)[0]
+    }
 }
 
 export function compile (state: CompilationState, module: CompiledModule) {
@@ -32,19 +51,23 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 decoration = 2
             } else if (decorationCode == 11) {
                 decoration = new Builtin(state.consumeWord())
+                console.debug(`Decorate $${targetId} with Builtin(${decoration.value})`)
             } else if (decorationCode == 6) {
                 decoration = new ArrayStride(state.consumeWord())
+                console.debug(`Decorate $${targetId} with ArrayStride(${decoration.stride})`)
             } else if (decorationCode == 30) {
                 decoration = new Location(state.consumeWord())
+                console.debug(`Decorate $${targetId} with Location(${decoration.value})`)
             } else if (decorationCode == 33) {
                 decoration = new Binding(state.consumeWord())
+                console.debug(`Decorate $${targetId} with Binding(${decoration.value})`)
             } else if (decorationCode == 34) {
                 decoration = new DescriptorSet(state.consumeWord())
+                console.debug(`Decorate $${targetId} with DescriptorSet(${decoration.value})`)
             } else {
                 dontKnow()
             }
-            module.decorations[targetId] = module.decorations[targetId] ? module.decorations[targetId].push(decoration) : [decoration]
-            console.debug(`decorate ${targetId} with ${decorationCode}`)
+            module.decorations.putDecoration(targetId, <Decoration> decoration)
             state.processed = true
         break
         // OpMemberDecorate

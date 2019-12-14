@@ -1,6 +1,6 @@
 import { GPUCommandBuffer } from "./GPUQueue";
 import { GPURenderPassEncoder, GPURenderPassDescriptor } from "./GPURenderPassEncoder";
-import GPUBuffer from "./GPUBuffer";
+import GPUBuffer, { GPUBufferSize } from "./GPUBuffer";
 import { GPUTexture } from "./textures";
 import { GPUExtent3D } from "./interfaces";
 import dontKnow from "./dontKnow";
@@ -29,7 +29,7 @@ interface GPUTextureCopyView {
     origin?: GPUOrigin3D;
 }
 
-type GPUBufferSize = number;
+
 
 export default class GPUCommandEncoder {
     private _currentRenderPass?: GPURenderPassEncoder

@@ -2,6 +2,8 @@ import dontKnow from "../dontKnow"
 import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer } from "./types"
 import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
+import { VertexInputs } from "../KQueue"
+import { Decorations, Location } from "./annotations"
 
 export class Pointer {
     constructor(public memory: Memory, public address: number, public type: Type) {
@@ -80,7 +82,7 @@ export class Memory {
         this.lastFree = 0
     }
 
-    createVariable(type: Type): Pointer {
+    createVariable(type: Type, resultId: number): Pointer {
         let address = this.allocateMemory(type.getSize())
         let pointer = new Pointer(this, address, type)
         return pointer
@@ -104,9 +106,8 @@ export class Memory {
 }
 
 export class InputMemory extends Memory {
-    invocationsCount = 0
-    constructor(memory: ArrayBuffer) {
-        super(memory)
+    constructor(private inputs: VertexInputs, private decorations: Decorations) {
+        super(inputs.buffer)
     }
 
     allocateMemory(size: number) {
@@ -118,13 +119,30 @@ export class InputMemory extends Memory {
         throw new Error("Input memory is read-only.")
     }
 
-    createVariable(type: Type, value: number[] = []): Pointer {
-        if (this.invocationsCount > 0 || value.length > 0) {
+    clear() {
+        throw new Error("Input memory is read-only.")
+    }
+
+    write(pointer: Pointer, data: number[]) {
+        throw new Error("Input memory is read-only.")
+    }
+
+    writeUint32(pointer: Pointer, value: number) {
+        throw new Error("Input memory is read-only.")
+    }
+
+    createVariable(type: Type, resultId: number, value: number[] = []): Pointer {
+        if (value.length > 0) {
             dontKnow()
         }
-        this.invocationsCount++
-        return new Pointer(this, 0, type)
+        let decoration: Location = this.decorations.getSingleDecoration(resultId, Location)
+        if (!decoration) {
+            dontKnow()
+        }
+        let start = this.inputs.locations[decoration.value].start
+        return new Pointer(this, start, type)
     }
+
 }
 
 export class ConstantComposite {
@@ -158,7 +176,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 module.flow.push((execution: Execution) => {
                     let pointerType = <TypePointer> execution.heap[typeId]
                     let type = pointerType.type
-                    let pointer = execution.getMemorySubsystem(storageClass).createVariable(type)
+                    let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpVariable ${typeId} ${storageClass}`)

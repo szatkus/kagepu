@@ -5,13 +5,22 @@ import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from "./GPURe
 import GPUBindGroup from "./GPUBindGroup";
 import GPUBuffer from "./GPUBuffer";
 import dontKnow from "./dontKnow";
-import { GPUPipelineStageDescriptor } from "./interfaces";
+import { GPUPipelineStageDescriptor, GPUInputStepMode, GPUIndexFormat } from "./interfaces";
 import { Context2DTexture } from "./GPUCanvasContext";
 import { executeShader } from "./spirv/execution";
 
+export interface VertexInputs {
+    buffer: ArrayBuffer,
+    locations: Array<{
+        start: number,
+        length: number
+    }>
+}
+
 export default class KQueue implements GPUQueue {
     _pipeline?: GPURenderPipeline
-    _vertexBuffers: GPUBuffer[] = []
+    _indexBuffer = new ArrayBuffer(64)
+    _vertexBuffers: ArrayBuffer[] = []
     _passDescriptor?: GPURenderPassDescriptor
     _bindGroups: GPUBindGroup[] = []
     submit(buffers: Array<KCommandBuffer>) {
@@ -30,13 +39,20 @@ export default class KQueue implements GPUQueue {
         }
     }
     _executeCommand(command: KCommand) {
-        (this as any)['__command__' + command.name].apply(this, command.args)
+        let methodName = '__command__' + command.name
+        if (!(methodName in this)) {
+            console.error('Missing command ' + command.name)
+        }
+        (this as any)[methodName].apply(this, command.args)
     }
     __command__setPipeline(pipeline: GPURenderPipeline) {
         this._pipeline = pipeline
     }
-    __command__setVertexBuffers(startSlot: number, buffers: Array<GPUBuffer>, offsets: Array<number>) {
-        this._vertexBuffers = buffers
+    __command__setIndexBuffer(buffer: GPUBuffer, offset: number) {
+        this._indexBuffer = buffer._data!.slice(offset)
+    }
+    __command__setVertexBuffer(slot: number, buffer: GPUBuffer, offset: number) {
+        this._vertexBuffers[slot] = buffer._data!.slice(offset)
     }
     __command__setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets?: Array<number>) {
         this._bindGroups[index] = bindGroup
@@ -49,18 +65,17 @@ export default class KQueue implements GPUQueue {
         let vertexStage = this._pipeline!._descriptor.vertexStage
         let verticiesData: any[] = []
         for (let i = 0; i < vertexCount; i++) {
+            let inputBuffer = new ArrayBuffer(32)
+            let inputBufferView = new Uint8Array(inputBuffer)
             // according to the specification it's a required property, but in samples it's omitted
-            if (pipeline._descriptor.vertexInput &&
+            /*if (pipeline._descriptor.vertexInput &&
                 pipeline._descriptor.vertexInput.vertexBuffers &&
                 pipeline._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
                 dontKnow()
             }
-            let inputBuffer = new ArrayBuffer(32)
-            let inputBufferView = new Uint8Array(inputBuffer)
             for (let j = 0; j < this._vertexBuffers.length; j++) {
                 let offset = offsets[j] || 0
-                let vertexBuffer = this._vertexBuffers[0]._mapWrite()
-                let vertexBufferView = new Uint8Array(vertexBuffer)
+                let vertexBufferView = new Uint8Array(this._vertexBuffers[j])
                 let vertexBufferInput = this._pipeline!._descriptor.vertexInput.vertexBuffers[0]
                 if (vertexBufferInput.stepMode != 'vertex') {
                     dontKnow()
@@ -69,13 +84,13 @@ export default class KQueue implements GPUQueue {
                     copyBytes(inputBufferView, attribute.offset, dataLength.get(attribute.format)!, vertexBufferView, offset + attribute.offset)
                 }
                 offsets[j] = offset + vertexBufferInput.stride
-            }
+            }*/
             console.debug(vertexStage.entryPoint)
             console.debug(vertexStage.module)
             console.debug(new Float32Array(inputBuffer))
             inputBufferView[0] = i
             if (i > 255) dontKnow()
-            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, inputBuffer)
+            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, locations:[]})
         }
         let output = <Context2DTexture> this._passDescriptor!.colorAttachments[0].attachment._texture
         if (this._pipeline!._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
@@ -91,7 +106,7 @@ export default class KQueue implements GPUQueue {
                     const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
                     if (dir1 == -1 && dir2 == 1 && dir3 == -1) {
                         let inputBuffer = new ArrayBuffer(32)
-                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, inputBuffer)
+                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, locations:[]})
                         imageData.data[(y * imageData.height + x) * 4] = pixelData.color[0] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 1] = pixelData.color[1] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 2] = pixelData.color[2] * 255
@@ -101,6 +116,44 @@ export default class KQueue implements GPUQueue {
             }
         }
         output._context.putImageData(imageData, 0, 0)
+    }
+    __command__drawIndexed(indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
+        let pipeline = this._pipeline ? this._pipeline : dontKnow()
+        
+        let offsets: number[] = []
+        let vertexStage = this._pipeline!._descriptor.vertexStage
+        let vertexState = this._pipeline!._descriptor.vertexState
+        let verticiesData: any[] = []
+        for (let i = 0; i < indexCount; i++) {
+            let inputBuffer = new ArrayBuffer(64)
+            let inputBufferView = new Uint8Array(inputBuffer)
+            let lastPosition = 0
+            let inputs: VertexInputs = {
+                buffer: inputBuffer,
+                locations: []
+            }
+            for (let j = 0; j < vertexState.vertexBuffers.length; j++) {
+                let descriptor = vertexState.vertexBuffers[j]
+                let indexBuffer = new Uint16Array(this._indexBuffer)
+                let vertexBuffer = new Uint8Array(this._vertexBuffers[j])
+                if (descriptor.stepMode !== GPUInputStepMode.vertex || vertexState.indexFormat !== GPUIndexFormat.uint16 || descriptor.attributes.length > 1  || descriptor.attributes[0].offset !== 0) {
+                    dontKnow()
+                }
+                var index = indexBuffer[i]
+                for (let k = 0; k < descriptor.arrayStride; k++) {
+                    inputBufferView[lastPosition] = vertexBuffer[index * descriptor.arrayStride + k]
+                    lastPosition++
+                }
+                inputs.locations[j] = {
+                    start: lastPosition - descriptor.arrayStride,
+                    length: descriptor.arrayStride
+                }
+            }
+            console.debug(vertexStage.entryPoint)
+            console.debug(vertexStage.module)
+            console.debug(new Float32Array(inputBuffer))
+            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, inputs)
+        }
     }
 }
 
@@ -120,7 +173,7 @@ function checkDirection(x1: number, y1: number, x2: number, y2: number, x3: numb
     return 0
 }
                 
-function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: ArrayBuffer) {
+function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: VertexInputs) {
     let output = executeShader(vertexStage, inputBuffer)
     return {
         position: Array.from(output.slice(0, 4))
@@ -128,7 +181,7 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffe
     }
 }
 
-function executeFragmentShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: ArrayBuffer) {
+function executeFragmentShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: VertexInputs) {
     let output = executeShader(vertexStage, inputBuffer)
     return {     
         color: Array.from(output.slice(0, 4))
