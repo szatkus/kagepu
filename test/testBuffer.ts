@@ -9,7 +9,7 @@ describe('GPUBuffer', () => {
     let device = await adapter.requestDevice()
     let buffer = device.createBuffer({
       size: 128,
-      usage: kagegpu.GPUBufferUsage.TRANSFER_DST
+      usage: kagegpu.GPUBufferUsage.COPY_DST
     })
     let array = new Uint8Array(64)
     array[0] = 43
@@ -28,7 +28,7 @@ describe('GPUBuffer', () => {
     let device = await adapter.requestDevice()
     let [buffer, array] = device.createBufferMapped({
       size: 128,
-      usage: kagegpu.GPUBufferUsage.TRANSFER_DST
+      usage: kagegpu.GPUBufferUsage.COPY_DST
     })
     expect(buffer._mapped).to.be.true
   })

@@ -4,12 +4,15 @@ import dontKnow from './dontKnow';
 
 export type GPUBufferSize = number;
 
+let worker = new Worker('data:application/javascript,')
+
 export default class {
   _data: ArrayBuffer | undefined
   _error: Error | undefined
   _usage: number
   _mapped = false
   _destroyed = false
+  _toDetach: Array<ArrayBuffer> = []
   constructor (descriptor: GPUBufferDescriptor) {
     try {
       this._data = new ArrayBuffer(descriptor.size)
@@ -32,14 +35,17 @@ export default class {
     if (srcOffset !== 0 || length != this._data!.byteLength) {
       dontKnow()
     }
-    if (!(this._usage & GPUBufferUsage.TRANSFER_DST)) {
+    if (!(this._usage & GPUBufferUsage.COPY_DST)) {
       // ERROR: validation error
+      debugger
     }
     if (!(offset + data.byteLength <= this._data!.byteLength)) {
       // ERROR: validation error
+      debugger
     }
     if (this._mapped || this._destroyed) {
       // ERROR: validation error
+      debugger
     }
     // TODO: alignment
     let input = new Uint8Array(data)
@@ -53,7 +59,9 @@ export default class {
       throw this._error
     }
     this._mapped = true
-    return this._data!.slice(0)
+    let dataCopy = this._data!.slice(0)
+    this._toDetach.push(dataCopy)
+    return <ArrayBuffer> Object.freeze(dataCopy)
   }
   async mapReadAsync (): Promise<ArrayBuffer> {
     return this._mapRead()
@@ -69,9 +77,17 @@ export default class {
     return this._mapWrite()
   }
   unmap () {
+    let oldData = this._data!
+    this._data = oldData.slice(0)
     this._mapped = false
+    this._toDetach.push(oldData)
+    worker.postMessage('detach', this._toDetach)
+    this._toDetach = []
   }
   destroy () {
     this._destroyed = false
+    this._toDetach.push(this._data!)
+    worker.postMessage('detach', this._toDetach)
+    this._toDetach = []
   }
 }
