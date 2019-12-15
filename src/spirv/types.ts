@@ -6,11 +6,19 @@ export class Type {
         return 0
     }
 }
-export class TypeVoid extends Type {}
+export class TypeVoid extends Type {
+    toString() {
+        return `TypeVoid`
+    }
+}
 
 export class TypeFunction extends Type {
     constructor(public type: Type, public types: Array<Type>) {
         super()
+    }
+
+    toString() {
+        return ` TypeFunction(${this.types.map(t => t.toString())}): ${this.type.toString()}`
     }
 }
 
@@ -25,6 +33,10 @@ export class TypeInt extends Type {
     getSize(): number {
         return this.width / 8
     }
+
+    toString() {
+        return `TypeInt(width=${this.width}, signed=${this.signed})`
+    }
 }
 
 export class TypeVector extends Type {
@@ -34,6 +46,10 @@ export class TypeVector extends Type {
 
     getSize(): number {
         return this.type.getSize() * this.count
+    }
+
+    toString() {
+        return `TypeVector(${this.type.toString()}, count=${this.count})`
     }
 }
 
@@ -49,6 +65,10 @@ export class TypeMatrix extends Type {
     getSize(): number {
         return this.vectorType.getSize() * this.columns
     }
+
+    toString() {
+        return `TypeMatrix(${this.type.toString()}, columns=${this.columns}, rows=${this.rows})`
+    }
 }
 
 export class TypeFloat extends Type {
@@ -63,21 +83,33 @@ export class TypeFloat extends Type {
     getSize(): number {
         return this.width / 8
     }
+
+    toString() {
+        return `TypeFloat(${this.width})`
+    }
 }
 
 export class TypePointer extends Type {
     constructor(public storageClass: number, public type: Type) {
         super()
     }
+
+    toString() {
+        return `TypePointer(${this.type.toString()}, storageClass=${this.storageClass})`
+    }
 }
 
 export class TypeArray extends Type {
-    constructor( public type: Type, public count: number) {
+    constructor(public type: Type, public count: number) {
         super()
     }
 
     getSize(): number {
         return this.type.getSize() * this.count
+    }
+
+    toString() {
+        return `TypeArray(${this.type.toString()}, count=${this.count})`
     }
 }
 
@@ -88,6 +120,10 @@ export class TypeStruct extends Type {
 
     getSize(): number {
         return this.members.reduce((a, t) => a + t.getSize(), 0)
+    }
+
+    toString() {
+        return `TypeStruct(${this.members.map(t => t.toString())})`
     }
 }
 
