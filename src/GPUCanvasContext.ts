@@ -100,7 +100,7 @@ class GPUSwapChain {
     }
 }
 
-export default class {
+export default class GPUCanvasContext {
     private context: CanvasRenderingContext2D
     constructor(context: CanvasRenderingContext2D) {
         this.context = context

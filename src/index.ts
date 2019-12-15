@@ -1,5 +1,5 @@
 import GPUAdapter from './GPUAdapter'
-import { GPUBufferUsage, GPUShaderStageBit, GPUColorWriteBits, GPUTextureUsage } from './constants'
+import { GPUBufferUsage, GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
 import GPUValidationError from './GPUValidationError'
 
@@ -12,10 +12,13 @@ let gpu = {
   GPUBufferUsage,
   monkeyPatch () {
     (window as any).GPUBufferUsage = GPUBufferUsage;
-    (window as any).GPUShaderStageBit = GPUShaderStageBit;
+    // name has changed, but I leave it for near future
+    (window as any).GPUShaderStageBit = GPUShaderStage;
+    (window as any).GPUShaderStage = GPUShaderStage;
     (window as any).GPUColorWriteBits = GPUColorWriteBits;
     (window as any).GPUTextureUsage = GPUTextureUsage;
     (window as any).GPUValidationError = GPUValidationError;
+    (window as any).GPUCanvasContext = GPUCanvasContext;
     (window.navigator as any).gpu = gpu;
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
