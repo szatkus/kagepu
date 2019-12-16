@@ -121,7 +121,7 @@ export class KTexture implements GPUTexture {
         "depth24plus",
         "depth24plus-stencil8"
     ]
-    if (this._descriptor.format == 'rgba8unorm') {
+    if (this._descriptor.format === 'rgba8unorm' || this._descriptor.format === 'rgba8uint') {
       return 32
     }
     dontKnow()

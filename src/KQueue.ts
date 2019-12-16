@@ -2,16 +2,19 @@ import GPUQueue from "./GPUQueue";
 import { KCommandBuffer } from "./GPUCommandEncoder";
 import { GPURenderPipeline } from "./GPURenderPipeline";
 import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from "./GPURenderPassEncoder";
-import GPUBindGroup from "./GPUBindGroup";
+import { GPUBindGroup } from "./GPUBindGroup";
 import GPUBuffer from "./GPUBuffer";
 import dontKnow from "./dontKnow";
-import { GPUPipelineStageDescriptor, GPUInputStepMode, GPUIndexFormat } from "./interfaces";
+import { GPUPipelineStageDescriptor, GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor } from "./interfaces";
 import { Context2DTexture } from "./GPUCanvasContext";
 import { executeShader } from "./spirv/execution";
+import { GPUComputePassEncoder } from "./GPUComputePassEncoder";
+import { GPUComputePipeline } from "./GPUComputePipeline";
 import { GPUFenceDescriptor, GPUFence } from "./GPUFence";
 
 export interface VertexInputs {
     buffer: ArrayBuffer,
+    bindGroups: GPUBindGroup[],
     locations: Array<{
         start: number,
         length: number
@@ -33,13 +36,25 @@ export default class KQueue implements GPUQueue {
     }
     submit(buffers: Array<KCommandBuffer>) {
         for (let commandBuffer of buffers) {
-            await this._processRenderPasses(commandBuffer._renderPasses)
+            this._processRenderPasses(commandBuffer._renderPasses)
+            this._processComputePasses(commandBuffer._computePasses)
         }
     }
-    async _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
+    _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
         for (let pass of renderPasses) {
             this._passDescriptor = pass._descriptor
-            await this._runRenderPass(pass)
+            for (let command of pass._commands) {
+                this._executeCommand(command)
+            }
+        }
+    }
+
+    _processComputePasses(computePasses: GPUComputePassEncoder[]) {
+        for (let pass of computePasses) {
+            this._computePassDescriptor = pass._descriptor
+            for (let command of pass._commands) {
+                this._executeCommand(command)
+            }
         }
     }
     async _runRenderPass(pass: GPURenderPassEncoder) {
@@ -86,12 +101,22 @@ export default class KQueue implements GPUQueue {
     __command__setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets?: Array<number>) {
         this._bindGroups[index] = bindGroup
     }
+    __command__dispatch(x: number, y: number, z: number) {
+        let pipeline = <GPUComputePipeline> this._pipeline
+        let inputBuffer = new ArrayBuffer(64)
+        let inputs: VertexInputs = {
+            buffer: inputBuffer,
+            bindGroups: this._bindGroups,
+            locations: []
+        }
+        executeComputeShader(pipeline._descriptor.computeStage, inputs)
+    }
     __command__draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
-        let pipeline = this._pipeline ? this._pipeline : dontKnow()
+        let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())
         // TODO: clear color
         
         let offsets: number[] = []
-        let vertexStage = this._pipeline!._descriptor.vertexStage
+        let vertexStage = pipeline._descriptor.vertexStage
         let verticiesData: any[] = []
         for (let i = 0; i < vertexCount; i++) {
             let inputBuffer = new ArrayBuffer(32)
@@ -119,10 +144,10 @@ export default class KQueue implements GPUQueue {
             console.debug(new Float32Array(inputBuffer))
             inputBufferView[0] = i
             if (i > 255) dontKnow()
-            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, locations:[]})
+            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations:[]})
         }
         let output = <Context2DTexture> this._passDescriptor!.colorAttachments[0].attachment._texture
-        if (this._pipeline!._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
+        if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
         let imageData = output._context.getImageData(0, 0, output._context.canvas.width, output._context.canvas.height)
         for (let i = 0; i < vertexCount / 3; i++) {
             for (let y = 0; y < imageData.height; y++) {
@@ -135,7 +160,7 @@ export default class KQueue implements GPUQueue {
                     const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
                     if (dir1 == -1 && dir2 == 1 && dir3 == -1) {
                         let inputBuffer = new ArrayBuffer(32)
-                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, locations:[]})
+                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations:[]})
                         imageData.data[(y * imageData.height + x) * 4] = pixelData.color[0] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 1] = pixelData.color[1] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 2] = pixelData.color[2] * 255
@@ -147,11 +172,11 @@ export default class KQueue implements GPUQueue {
         output._context.putImageData(imageData, 0, 0)
     }
     __command__drawIndexed(indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
-        let pipeline = this._pipeline ? this._pipeline : dontKnow()
+        let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())
         
         let offsets: number[] = []
-        let vertexStage = this._pipeline!._descriptor.vertexStage
-        let vertexState = this._pipeline!._descriptor.vertexState
+        let vertexStage = pipeline._descriptor.vertexStage
+        let vertexState = pipeline._descriptor.vertexState
         let verticiesData: any[] = []
         for (let i = 0; i < indexCount; i++) {
             let inputBuffer = new ArrayBuffer(64)
@@ -159,6 +184,7 @@ export default class KQueue implements GPUQueue {
             let lastPosition = 0
             let inputs: VertexInputs = {
                 buffer: inputBuffer,
+                bindGroups: this._bindGroups,
                 locations: []
             }
             for (let j = 0; j < vertexState.vertexBuffers.length; j++) {
@@ -179,7 +205,9 @@ export default class KQueue implements GPUQueue {
                 }
             }
             verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, inputs)
+            executeFragmentShader(pipeline._descriptor.fragmentStage, inputs)
             debugger
+            throw new Error("ALT")
         }
     }
 }
@@ -200,7 +228,7 @@ function checkDirection(x1: number, y1: number, x2: number, y2: number, x3: numb
     return 0
 }
                 
-function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: VertexInputs) {
+function executeVertexShader(vertexStage: GPUProgrammableStageDescriptor, inputBuffer: VertexInputs) {
     let output = executeShader(vertexStage, inputBuffer)
     return {
         position: Array.from(output.slice(0, 4))
@@ -208,11 +236,15 @@ function executeVertexShader(vertexStage: GPUPipelineStageDescriptor, inputBuffe
     }
 }
 
-function executeFragmentShader(vertexStage: GPUPipelineStageDescriptor, inputBuffer: VertexInputs) {
+function executeFragmentShader(vertexStage: GPUProgrammableStageDescriptor, inputBuffer: VertexInputs) {
     let output = executeShader(vertexStage, inputBuffer)
     return {     
         color: Array.from(output.slice(0, 4))
     }
+}
+
+function executeComputeShader(vertexStage: GPUProgrammableStageDescriptor, inputBuffer: VertexInputs) {
+    executeShader(vertexStage, inputBuffer)
 }
 
 function copyBytes(output: Uint8Array, outputOffset: number, length: number, input: Uint8Array, inputOffset: number) {

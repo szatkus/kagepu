@@ -1,9 +1,10 @@
 import GPUPipelineLayout from './GPUPipelineLayout';
 import GPUShaderModule from './GPUShaderModule';
 import { GPUBufferSize } from './GPUBuffer';
+import GPUBindGroupLayout from './GPUBindGroupLayout';
 
 export interface GPUObjectDescriptorBase {
-  label: string
+  label?: string
 }
 
 export interface GPUBufferDescriptor {
@@ -54,9 +55,6 @@ export interface GPUShaderModuleDescriptor {
 
 export interface GPUPipelineLayoutDescriptor {
   bindGroupLayouts: Array<GPUBindGroupLayout>
-}
-
-export interface GPUBindGroupLayout {
 }
 
 export interface GPUPipelineDescriptorBase {
@@ -157,16 +155,11 @@ export interface GPUVertexStateDescriptor {
   vertexBuffers: Array<GPUVertexBufferLayoutDescriptor>
 }
 
-export interface GPURenderPipelineDescriptor extends GPUPipelineDescriptorBase {
-  vertexStage: GPUPipelineStageDescriptor,
-  fragmentStage: GPUPipelineStageDescriptor,
-  primitiveTopology: string,
-  rasterizationState: GPURasterizationStateDescriptor,
-  colorStates: Array<GPUColorStateDescriptor>,
-  //GPUDepthStencilStateDescriptor? depthStencilState;
-  //GPUInputStateDescriptor inputState;
-  vertexState: GPUVertexStateDescriptor,
-  sampleCount: number,
-  sampleMask: number,
-  alphaToCoverageEnabled: boolean
+export interface GPUComputePassDescriptor extends GPUObjectDescriptorBase {
+
+}
+
+export interface GPUProgrammableStageDescriptor {
+  module: GPUShaderModule
+  entryPoint: string
 }

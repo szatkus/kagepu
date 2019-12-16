@@ -1,18 +1,19 @@
 import GPUAdapter from './GPUAdapter'
 import { extensions, limits } from './constants'
-import { GPUBufferDescriptor, GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor, GPURenderPipelineDescriptor } from './interfaces'
+import { GPUBufferDescriptor, GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
 import GPUBuffer from './GPUBuffer'
 import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
 import GPUSampler from './GPUSampler'
 import GPUBindGroupLayout from './GPUBindGroupLayout';
 import GPUShaderModule from './GPUShaderModule';
 import GPUPipelineLayout from './GPUPipelineLayout';
-import { GPURenderPipeline } from './GPURenderPipeline';
+import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipeline';
 import GPUCommandEncoder from './GPUCommandEncoder';
-import GPUBindGroup, { GPUBindGroupDescriptor } from './GPUBindGroup';
+import { GPUBindGroup, GPUBindGroupDescriptor } from './GPUBindGroup';
 import GPUQueue from './GPUQueue';
 import GPUError from './GPUError';
 import KQueue from './KQueue';
+import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
 
 enum GPUErrorFilter {
   "none",
@@ -57,6 +58,9 @@ export default class {
   }
   createRenderPipeline(descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     return new GPURenderPipeline(descriptor)
+  }
+  createComputePipeline(descriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
+    return new GPUComputePipeline(descriptor)
   }
   createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
     return new GPUBindGroup(descriptor)

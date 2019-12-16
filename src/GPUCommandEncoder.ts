@@ -2,11 +2,12 @@ import { GPUCommandBuffer } from "./GPUQueue";
 import { GPURenderPassEncoder, GPURenderPassDescriptor } from "./GPURenderPassEncoder";
 import GPUBuffer, { GPUBufferSize } from "./GPUBuffer";
 import { GPUTexture } from "./textures";
-import { GPUExtent3D } from "./interfaces";
+import { GPUExtent3D, GPUComputePassDescriptor } from "./interfaces";
 import dontKnow from "./dontKnow";
+import { GPUComputePassEncoder } from "./GPUComputePassEncoder";
 
 export class KCommandBuffer implements GPUCommandBuffer  {
-    constructor(public _renderPasses: Array<GPURenderPassEncoder>) {}
+    constructor(public _renderPasses: Array<GPURenderPassEncoder>, public _computePasses: Array<GPUComputePassEncoder>) {}
 }
 
 interface GPUBufferCopyView {
@@ -34,6 +35,8 @@ interface GPUTextureCopyView {
 export default class GPUCommandEncoder {
     private _currentRenderPass?: GPURenderPassEncoder
     private _renderPasses: Array<GPURenderPassEncoder> = []
+    private _currentComputePass?: GPUComputePassEncoder
+    private _computePasses: Array<GPUComputePassEncoder> = []
 
     beginRenderPass(descriptor: GPURenderPassDescriptor): GPURenderPassEncoder {
         if (this._currentRenderPass) {
@@ -43,14 +46,25 @@ export default class GPUCommandEncoder {
         return this._currentRenderPass
     }
 
+    beginComputePass(descriptor: GPUComputePassDescriptor = { label: '' }): GPUComputePassEncoder {
+        if (this._currentComputePass) {
+           this._computePasses.push(this._currentComputePass)
+        }
+        this._currentComputePass = new GPUComputePassEncoder(descriptor)
+        return this._currentComputePass
+    }
+
     finish(descriptor?: any): GPUCommandBuffer  {
         if (descriptor) {
             throw new Error('not supported yet')
         }
         if (this._currentRenderPass) {
             this._renderPasses.push(this._currentRenderPass)
-         }
-        return new KCommandBuffer(this._renderPasses)
+        }
+        if (this._currentComputePass) {
+            this._computePasses.push(this._currentComputePass)
+        }
+        return new KCommandBuffer(this._renderPasses, this._computePasses)
     }
 
     copyBufferToBuffer(source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {

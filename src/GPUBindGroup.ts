@@ -1,7 +1,8 @@
 import GPUSampler from "./GPUSampler";
 import GPUBuffer from "./GPUBuffer";
-import { GPUObjectDescriptorBase, GPUBindGroupLayout } from "./interfaces";
+import { GPUObjectDescriptorBase } from "./interfaces";
 import { GPUTextureView } from "./textures";
+import GPUBindGroupLayout from "./GPUBindGroupLayout";
 
 export type GPUBindingResource = GPUSampler | GPUTextureView | GPUBufferBinding
 
@@ -22,9 +23,8 @@ export interface GPUBindGroupDescriptor extends GPUObjectDescriptorBase {
   bindings: Array<GPUBindGroupBinding>
 }
 
-export default class GPUBindGroup {
-  private descriptor: GPUBindGroupDescriptor
-  constructor(descriptor: GPUBindGroupDescriptor) {
+export class GPUBindGroup {
+  constructor(public descriptor: GPUBindGroupDescriptor) {
     this.descriptor = descriptor
   }
 }
