@@ -24,6 +24,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let rightVector = <Pointer> execution.heap[rightVectorId]
                     let result = new Float32Array(resultType.count)
                     components.forEach((component, index) => {
+                        if (component === UNDEFINED) {
+                            result[index] = 0
+                            return
+                        }
                         if (index % 2 == 0) {
                             result[index] = leftVector.readFloat32Array()[component]
                         } else {
