@@ -9,28 +9,49 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpFMul
         case 133:
             {
-                let resultType = state.consumeWord()
+                let resultTypeId = state.consumeWord()
                 let resultId = state.consumeWord()
-                let leftOperand = state.consumeWord()
-                let rightOperand = state.consumeWord()
+                let leftOperandId = state.consumeWord()
+                let rightOperandId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    dontKnow()
+                    let resultType = execution.heap[resultTypeId]
+                    let leftOperand = <Pointer> execution.heap[leftOperandId]
+                    let rightOperand = <Pointer> execution.heap[rightOperandId]
+                    let count = resultType instanceof TypeVector ? resultType.count : 1
+                    let result = new Float32Array(count)
+                    let leftVectorData = leftOperand.readFloat32Array()
+                    let rightVectorData = rightOperand.readFloat32Array()
+                    for (let i = 0; i < resultType.count; i++) {
+                        result[i] = leftVectorData[i] * rightVectorData[i]
+                    }
+                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
                 })
-                console.debug(`$${resultId} = OpFMul $${leftOperand} $${rightOperand}`)
+                console.debug(`$${resultId} = OpFMul $${leftOperandId} $${rightOperandId}`)
                 state.processed = true
             }
         break
         // OpVectorTimesScalar
         case 142:
             {
-                let resultType = state.consumeWord()
+                let resultTypeId = state.consumeWord()
                 let resultId = state.consumeWord()
-                let vector = state.consumeWord()
-                let scalar = state.consumeWord()
+                let vectorId = state.consumeWord()
+                let scalarId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    dontKnow()
+                    let resultType = <TypeVector> execution.heap[resultTypeId]
+                    if (!(resultType.type instanceof TypeFloat) || resultType.type.width !== 32) {
+                        dontKnow()
+                    }
+                    let vector = <Pointer> execution.heap[vectorId]
+                    let scalar = <Pointer> execution.heap[scalarId]
+                    let result = new Float32Array(resultType.count)
+                    let vectorData = vector.readFloat32Array()
+                    for (let i = 0; i < resultType.count; i++) {
+                        result[i] = vectorData[i] * scalar.readFloat32()
+                    }
+                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
                 })
-                console.debug(`$${resultId} = OpMatrixTimesVector $${vector} $${scalar}`)
+                console.debug(`$${resultId} = OpMatrixTimesVector $${vectorId} $${scalarId}`)
                 state.processed = true
             }
         break
