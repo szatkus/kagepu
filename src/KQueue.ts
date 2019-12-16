@@ -8,6 +8,7 @@ import dontKnow from "./dontKnow";
 import { GPUPipelineStageDescriptor, GPUInputStepMode, GPUIndexFormat } from "./interfaces";
 import { Context2DTexture } from "./GPUCanvasContext";
 import { executeShader } from "./spirv/execution";
+import { GPUFenceDescriptor, GPUFence } from "./GPUFence";
 
 export interface VertexInputs {
     buffer: ArrayBuffer,
@@ -18,12 +19,19 @@ export interface VertexInputs {
 }
 
 export default class KQueue implements GPUQueue {
-    _pipeline?: GPURenderPipeline
+    _pipeline?: GPURenderPipeline | GPUComputePipeline
     _indexBuffer = new ArrayBuffer(64)
     _vertexBuffers: ArrayBuffer[] = []
     _passDescriptor?: GPURenderPassDescriptor
+    _computePassDescriptor?: GPUComputePassDescriptor
     _bindGroups: GPUBindGroup[] = []
-    async submit(buffers: Array<KCommandBuffer>) {
+    createFence(descriptor: GPUFenceDescriptor = { }): GPUFence {
+        return new GPUFence(descriptor)
+    }
+    signal(fence: GPUFence, signalValue: number) {
+        fence._value = signalValue
+    }
+    submit(buffers: Array<KCommandBuffer>) {
         for (let commandBuffer of buffers) {
             await this._processRenderPasses(commandBuffer._renderPasses)
         }
