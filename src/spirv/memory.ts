@@ -1,5 +1,5 @@
 import dontKnow from "../dontKnow"
-import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatrix } from "./types"
+import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatrix, TypeFloat } from "./types"
 import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 import { VertexInputs } from "../KQueue"
@@ -74,6 +74,51 @@ export class Pointer {
 
     writeUint32(value: number) {
         this.memory.writeUint32(this.address, value)
+    }
+
+    toString(): String {
+        if (this.type instanceof TypeFloat && this.type.width === 32) {
+            return this.memory.readFloat32(this.address).toString()
+        }
+
+        if (this.type instanceof TypeInt && this.type.width === 32 && this.type.signed) {
+            return this.memory.readInt32(this.address).toString()
+        }
+
+        if (this.type instanceof TypeInt && this.type.width === 32 && !this.type.signed) {
+            return this.memory.readUint32(this.address).toString()
+        }
+
+        if (this.type instanceof TypeVector || this.type instanceof TypeArray) {
+            let result = []
+            for (let i = 0; i < this.type.count; i++) {
+                result.push(new Pointer(this.memory, this.address + this.type.type.getSize() * i, this.type.type).toString())
+            }
+            return result.join(', ')
+        }
+
+        if (this.type instanceof TypeStruct) {
+            let result = []
+            let address = this.address
+            for (let i = 0; i < this.type.members.length; i++) {
+                result.push(new Pointer(this.memory, address, this.type.members[i]).toString())
+                address += this.type.members[i].getSize()
+            }
+            return result.join(', ')
+        }
+
+        if (this.type instanceof TypeMatrix) {
+            let result = ''
+            for (let r = 0; r < this.type.rows; r++) {
+                let row = []
+                for (let c = 0; c < this.type.columns; c++) {
+                    row.push(new Pointer(this.memory, this.address + c * this.type.vectorType.getSize() + r * this.type.type.getSize(), this.type.type).toString())
+                }
+                result += '[ ' + row.join(', ') + ' ]\n'
+            }
+            return result
+        }
+        return ''
     }
 }
 
@@ -221,7 +266,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
                     execution.heap[resultId] = pointer
                 })
-                console.debug(`$${resultId} = OpVariable ${typeId} ${storageClass}`)
+                console.debug(`$${resultId} = OpVariable $${typeId} ${storageClass}`)
                 state.processed = true
             }
         break
