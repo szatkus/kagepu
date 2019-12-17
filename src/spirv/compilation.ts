@@ -11,6 +11,8 @@ import { compile as controlFlowCompile } from "./controlFlow"
 import { compile as multiplicationCompile } from "./multiplication"
 import { compile as vectorsCompile } from "./vectors"
 import { compile as additionCompile } from "./addition"
+import compiler from "./compiler"
+import './images/'
 
 export type CodeStream = Uint32Array
 
@@ -95,6 +97,10 @@ export function compile(code: CodeStream) {
             multiplicationCompile(state, module)
             vectorsCompile(state, module)
             additionCompile(state, module)
+
+            if (compiler.handleInstruction(state.opCode, state, module)) {
+                state.processed = true
+            }
 
             // processing an instruction should change state of the program counter, otherwise it means that instruction is not supported
             if (!state.processed) {
