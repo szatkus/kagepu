@@ -1,1 +1,2 @@
-import './OpSampleImage'
+import './OpSampledImage'
+import './OpImage'
