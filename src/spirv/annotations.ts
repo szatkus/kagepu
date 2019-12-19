@@ -17,11 +17,11 @@ class Builtin implements Decoration {
     constructor(public value: number) {}
 }
 
-class DescriptorSet implements Decoration {
+export class DescriptorSet implements Decoration {
     constructor(public value: number) {}
 }
 
-class Binding implements Decoration {
+export class Binding implements Decoration {
     constructor(public value: number) {}
 }
 
