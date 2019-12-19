@@ -1,4 +1,6 @@
 import dontKnow from "../dontKnow"
+import { CompilationState, CompiledModule } from "./compilation";
+import { Execution } from "./execution";
 
 export class Type {
     getSize(): number {
@@ -6,6 +8,7 @@ export class Type {
         return 0
     }
 }
+
 export class TypeVoid extends Type {
     toString() {
         return `TypeVoid`
@@ -127,8 +130,51 @@ export class TypeStruct extends Type {
     }
 }
 
-import { CompilationState, CompiledModule } from "./compilation";
-import { Execution } from "./execution";
+export enum AccessQualifier {
+    ReadOnly,
+    WriteOnly,
+    ReadWrite
+}
+
+export class TypeImage extends Type {
+    constructor(public descriptor: {
+        // TODO: add enums for some
+        type: Type,
+        dimensionality: number,
+        depth: number,
+        arrayed: boolean,
+        multisampled: boolean,
+        sampled: number,
+        format: number,
+        access: AccessQualifier
+    }) {
+        super()
+    }
+
+    getSize(): number {
+        return 1
+    }
+
+    toString() {
+        return `TypeImage()`
+    }
+}
+
+export class TypeSampler extends Type {}
+
+export class TypeSampledImage extends Type {
+    constructor(type: TypeImage) {
+        super()
+    }
+
+    getSize(): number {
+        return 1
+    }
+
+    toString() {
+        return `TypeSampledImage()`
+    }
+}
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -193,6 +239,59 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     execution.heap[resultId] = new TypeMatrix(type, count)
                 })
                 console.debug(`$${resultId} = OpTypeMatrix $${typeId} ${count}`)
+                state.processed = true
+            }
+        break
+        // OpTypeImage
+        case 25:
+            {
+                let resultId = state.consumeWord()
+                let typeId = state.consumeWord()
+                let dimensionality = state.consumeWord()
+                let depth = state.consumeWord()
+                let arrayed = state.consumeWord() === 1
+                let multisampled = state.consumeWord() === 1
+                let sampled = state.consumeWord()
+                let format = state.consumeWord()
+                let access = state.pos < state.endPos ? state.consumeWord() : AccessQualifier.ReadWrite
+                module.flow.push((execution: Execution) => {
+                    let type = <Type> execution.heap[typeId]
+                    execution.heap[resultId] = new TypeImage({
+                        type,
+                        dimensionality,
+                        depth,
+                        arrayed,
+                        multisampled,
+                        sampled,
+                        format,
+                        access
+                    })
+                })
+                console.debug(`$${resultId} = OpTypeImage $${typeId} ${dimensionality} ${depth} ${access}`)
+                state.processed = true
+            }
+        break
+        // OpTypeSampler
+        case 26:
+            {
+                let resultId = state.consumeWord()
+                module.flow.push((execution: Execution) => {
+                    execution.heap[resultId] = new TypeSampler()
+                })
+                console.debug(`$${resultId} = OpTypeSampler`)
+                state.processed = true
+            }
+        break
+        // OpTypeSampledImage
+        case 27:
+            {
+                let resultId = state.consumeWord()
+                let typeId = state.consumeWord()
+                module.flow.push((execution: Execution) => {
+                    let type = execution.heap[typeId]
+                    execution.heap[resultId] = new TypeSampledImage(type)
+                })
+                console.debug(`$${resultId} = OpTypeSampler`)
                 state.processed = true
             }
         break
