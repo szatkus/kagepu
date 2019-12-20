@@ -1,6 +1,6 @@
 import GPUPipelineLayout from './GPUPipelineLayout';
 import GPUShaderModule from './GPUShaderModule';
-import { GPUBufferSize } from './GPUBuffer';
+import { GPUBufferSize } from './buffers';
 import GPUBindGroupLayout from './GPUBindGroupLayout';
 
 export interface GPUObjectDescriptorBase {

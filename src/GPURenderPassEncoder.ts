@@ -1,6 +1,6 @@
 import { GPURenderPipeline } from "./GPURenderPipeline";
-import GPUBuffer from "./GPUBuffer";
-import { GPUBindGroup } from "./GPUBindGroup";
+import { GPUBuffer } from "./buffers";
+import { GPUBindGroup } from "./bindGroups";
 import dontKnow from "./dontKnow";
 import { GPUObjectDescriptorBase } from "./interfaces";
 import { GPUTextureView } from "./textures";

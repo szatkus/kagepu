@@ -1,6 +1,6 @@
 import { GPUCommandBuffer } from "./GPUQueue";
 import { GPURenderPassEncoder, GPURenderPassDescriptor } from "./GPURenderPassEncoder";
-import GPUBuffer, { GPUBufferSize } from "./GPUBuffer";
+import { GPUBuffer, GPUBufferSize } from "./buffers";
 import { GPUTexture } from "./textures";
 import { GPUExtent3D, GPUComputePassDescriptor } from "./interfaces";
 import dontKnow from "./dontKnow";

@@ -3,13 +3,13 @@ import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatr
 import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 import { VertexInputs } from "../KQueue"
-import { Decorations, Location } from "./annotations"
+import { Decorations, Location, DescriptorSet, Binding } from "./annotations"
+import { GPUBufferBinding } from "../bindGroups"
+import { GPUTextureView } from "../textures"
+import { GPUSampler } from "../samplers"
 
 export class Pointer {
-    constructor(public memory: Memory, public address: number, public type: Type) {
-        if (type == undefined) {
-            debugger
-        }
+    constructor(public memory: Memory, public address: number, public type: Type, private object: any = {}) {
     }
 
     read(): number[] {
@@ -62,6 +62,10 @@ export class Pointer {
         }
         dontKnow()
         return this
+    }
+
+    getObject(): any {
+        return this.object
     }
 
     setIndex(index: number, data: number[]) {
@@ -222,14 +226,44 @@ export class InputMemory extends Memory {
         if (value.length > 0) {
             dontKnow()
         }
-        let decoration: Location = this.decorations.getSingleDecoration(resultId, Location)
-        if (!decoration) {
-            dontKnow()
+        let locationDecoration: Location = this.decorations.getSingleDecoration(resultId, Location)
+        if (locationDecoration) {
+            let start = this.inputs.locations[locationDecoration.value].start
+            return new Pointer(this, start, type)
         }
-        let start = this.inputs.locations[decoration.value].start
-        return new Pointer(this, start, type)
+        let descriptorSetDecoration: DescriptorSet = this.decorations.getSingleDecoration(resultId, DescriptorSet)
+        if (descriptorSetDecoration) {
+            let descriptor = this.inputs.bindGroups[descriptorSetDecoration.value].descriptor
+            let bindingDecoration: Binding = this.decorations.getSingleDecoration(resultId, Binding)
+            let binding = descriptor.bindings.filter(b => b.binding === bindingDecoration.value)[0]
+            if ('buffer' in binding.resource) {
+                let bufferBinding = <GPUBufferBinding> binding.resource
+                dontKnow()
+                return new Pointer(new Memory(bufferBinding.buffer._data!), bufferBinding.offset || 0, type)
+            }
+            if (binding.resource instanceof GPUTextureView) {
+                let buffer = binding.resource._getBuffer()
+                return new Pointer(new Memory(buffer), 0, new TypeArray(type, buffer.byteLength), binding.resource)
+            }
+            if (binding.resource instanceof GPUSampler) {
+                return new Pointer(new Memory(new ArrayBuffer(0)), 0, type, binding.resource)
+            }
+        }
+        dontKnow()
+        return new Pointer(this, 0, type)
     }
 
+}
+
+export class ConstantMemory extends Memory {
+    constructor(private inputMemory: Memory, private globalMemory: Memory) {
+        super(new ArrayBuffer(0))
+    }
+
+    createVariable(type: Type, resultId: number, value: number[] = []): Pointer {
+        // TODO: think about other use cases
+        return this.inputMemory.createVariable(type, resultId)
+    }
 }
 
 export class ConstantComposite {
@@ -260,10 +294,15 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let resultId = state.consumeWord()
                 let storageClass = state.consumeWord()
+                let initializerId = state.pos < state.endPos ? state.consumeWord() : 0
                 module.flow.push((execution: Execution) => {
                     let pointerType = <TypePointer> execution.heap[typeId]
                     let type = pointerType.type
                     let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
+                    if (initializerId !== 0) {
+                        let initializer = execution.heap[initializerId]
+                        debugger
+                    }
                     execution.heap[resultId] = pointer
                 })
                 console.debug(`$${resultId} = OpVariable $${typeId} ${storageClass}`)

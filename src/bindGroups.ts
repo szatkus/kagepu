@@ -1,5 +1,5 @@
-import GPUSampler from "./GPUSampler";
-import GPUBuffer from "./GPUBuffer";
+import { GPUSampler } from "./samplers";
+import { GPUBuffer } from "./buffers";
 import { GPUObjectDescriptorBase } from "./interfaces";
 import { GPUTextureView } from "./textures";
 import GPUBindGroupLayout from "./GPUBindGroupLayout";

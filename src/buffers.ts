@@ -6,7 +6,7 @@ export type GPUBufferSize = number;
 
 let worker = new Worker('data:application/javascript,')
 
-export default class {
+export class GPUBuffer {
   _data: ArrayBuffer | undefined
   _error: Error | undefined
   _usage: number

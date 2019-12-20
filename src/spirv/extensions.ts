@@ -38,8 +38,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                         let maxValue = 0
                         let vector = (<Pointer> operands[0]).readFloat32Array()
                         vector.forEach(value => maxValue = Math.max(Math.abs(value), maxValue))
-                        let result = new Float32Array(vector.map(value => value / maxValue))
-                        execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                        if (maxValue !== 0) {
+                            let result = new Float32Array(vector.map(value => value / maxValue))
+                            execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                        } else {
+                            execution.heap[resultId] = new Pointer(new Memory(new Float32Array(vector.length)), 0, resultType)
+                        }
                         return
                     }
                     dontKnow()
