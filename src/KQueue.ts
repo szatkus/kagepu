@@ -3,12 +3,11 @@ import { KCommandBuffer } from "./GPUCommandEncoder";
 import { GPURenderPipeline } from "./GPURenderPipeline";
 import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from "./GPURenderPassEncoder";
 import { GPUBindGroup } from "./bindGroups";
-import { GPUBuffer } from "./buffers";
+import { GPUBuffer, GPUBufferSize } from "./buffers";
 import dontKnow from "./dontKnow";
-import { GPUPipelineStageDescriptor, GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor } from "./interfaces";
+import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D } from "./interfaces";
 import { Context2DTexture } from "./GPUCanvasContext";
 import { executeShader } from "./spirv/execution";
-import { GPUComputePassEncoder } from "./GPUComputePassEncoder";
 import { GPUComputePipeline } from "./GPUComputePipeline";
 import { GPUFenceDescriptor, GPUFence } from "./GPUFence";
 
@@ -25,8 +24,7 @@ export default class KQueue implements GPUQueue {
     _pipeline?: GPURenderPipeline | GPUComputePipeline
     _indexBuffer = new ArrayBuffer(64)
     _vertexBuffers: ArrayBuffer[] = []
-    _passDescriptor?: GPURenderPassDescriptor
-    _computePassDescriptor?: GPUComputePassDescriptor
+    _passDescriptor?: GPURenderPassDescriptor | GPUComputePassDescriptor
     _bindGroups: GPUBindGroup[] = []
     createFence(descriptor: GPUFenceDescriptor = { }): GPUFence {
         return new GPUFence(descriptor)
@@ -34,25 +32,9 @@ export default class KQueue implements GPUQueue {
     signal(fence: GPUFence, signalValue: number) {
         fence._value = signalValue
     }
-    submit(buffers: Array<KCommandBuffer>) {
+    submit(buffers: KCommandBuffer[]) {
         for (let commandBuffer of buffers) {
-            this._processRenderPasses(commandBuffer._renderPasses)
-            this._processComputePasses(commandBuffer._computePasses)
-        }
-    }
-    _processRenderPasses(renderPasses: GPURenderPassEncoder[]) {
-        for (let pass of renderPasses) {
-            this._passDescriptor = pass._descriptor
-            for (let command of pass._commands) {
-                this._executeCommand(command)
-            }
-        }
-    }
-
-    _processComputePasses(computePasses: GPUComputePassEncoder[]) {
-        for (let pass of computePasses) {
-            this._computePassDescriptor = pass._descriptor
-            for (let command of pass._commands) {
+            for (let command of commandBuffer._commands) {
                 this._executeCommand(command)
             }
         }
@@ -89,6 +71,9 @@ export default class KQueue implements GPUQueue {
         }
         (this as any)[methodName].apply(this, command.args)
     }
+    __command__setDescriptor(descriptor: GPURenderPassDescriptor | GPUComputePassDescriptor) {
+        this._passDescriptor = descriptor
+    }
     __command__setPipeline(pipeline: GPURenderPipeline) {
         this._pipeline = pipeline
     }
@@ -101,6 +86,117 @@ export default class KQueue implements GPUQueue {
     __command__setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets?: Array<number>) {
         this._bindGroups[index] = bindGroup
     }
+    __command__copyBufferToBuffer(source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
+        let sourceView = new Uint8Array(source._mapWrite())
+        let destinationView = new Uint8Array(destination._mapWrite())
+        for (let i = 0; i < size; i++) {
+            destinationView[destinationOffset + i] = sourceView[sourceOffset + i]
+        }
+    }
+    __command__copyBufferToTexture(source: GPUBufferCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
+        source = {
+            ...{
+                offset: 0
+            },
+            ...source
+        }
+        destination = {
+            ...{
+                mipLevel: 0,
+                arrayLayer: 0,
+                origin: { x: 0, y: 0, z: 0}
+            },
+            ...destination
+        }
+        if (
+            source.offset! != 0 ||
+            destination.origin!.x! != 0 ||
+            destination.origin!.y! != 0 ||
+            destination.origin!.z! != 0
+            ) {
+            dontKnow()
+        }
+        if (
+            !copySize.width ||
+            !copySize.height ||
+            !copySize.depth ||
+            copySize.depth != 1
+            ) {
+            dontKnow()
+        }
+        let view: Uint8Array | Uint32Array = new Uint8Array(source.buffer._data!)
+        if (destination.texture._getPixelSize() == 32) {
+            view = new Uint32Array(source.buffer._data!)
+        }
+        for (var x = 0; x < copySize.width!; x++) {
+            for (var y = 0; y < copySize.height!; y++) {
+                for (var z = 0; z < copySize.depth!; z++) {
+                    let pixel = view[z * source.imageHeight * source.rowPitch + source.rowPitch * y + x]
+                    destination.texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
+                }
+            }
+        }
+    }
+    __command__copyTextureToTexture(source: GPUTextureCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
+        let arrayLayer = source.arrayLayer || 0
+        let mipLevel = source.mipLevel || 0
+        let origin = {
+            x: 0,
+            y: 0,
+            z: 0,
+            ...source.origin
+        }
+        if (arrayLayer !== 0 || mipLevel !== 0 || origin.x !== 0 || origin.y !== 0 || origin.z !== 0) {
+            dontKnow()
+        }
+        if (destination.origin!.y !== 0) {
+            dontKnow()
+        }
+        if (!copySize.width || !copySize.height || !copySize.depth) {
+            dontKnow()
+        }
+        for (var x = 0; x < copySize.width!; x++) {
+            for (var y = 0; y < copySize.height!; y++) {
+                for (var z = 0; z < copySize.depth!; z++) {
+                    let pixel = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
+                    destination.texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
+                }
+            }
+        }
+    }
+    __command__copyTextureToBuffer(source: GPUTextureCopyView, destination: GPUBufferCopyView, copySize: GPUExtent3D) {
+        let arrayLayer = source.arrayLayer || 0
+        let mipLevel = source.mipLevel || 0
+        let origin = {
+            x: 0,
+            y: 0,
+            z: 0,
+            ...source.origin
+        }
+        if (arrayLayer !== 0 || mipLevel !== 0 || origin.x !== 0 || origin.y !== 0 || origin.z !== 0) {
+            dontKnow()
+        }
+        if (destination.offset) {
+            dontKnow()
+        }
+        if (!copySize.width || !copySize.height || !copySize.depth) {
+            dontKnow()
+        }
+        let view: Uint8Array | Uint16Array | Uint32Array = new Uint8Array(destination.buffer._data!)
+        if (source.texture._getPixelSize() === 16) {
+            view = new Uint16Array(view.buffer)
+        }
+        if (source.texture._getPixelSize() === 32) {
+            view = new Uint32Array(view.buffer)
+        }
+        for (var x = 0; x < copySize.width!; x++) {
+            for (var y = 0; y < copySize.height!; y++) {
+                for (var z = 0; z < copySize.depth!; z++) {
+                    view[x + y * destination.rowPitch + z * destination.imageHeight * destination.rowPitch] = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
+                }
+            }
+        }
+    }
     __command__dispatch(x: number, y: number, z: number) {
         let pipeline = <GPUComputePipeline> this._pipeline
         let inputBuffer = new ArrayBuffer(64)
@@ -112,6 +208,7 @@ export default class KQueue implements GPUQueue {
         executeComputeShader(pipeline._descriptor.computeStage, inputs)
     }
     __command__draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
+        let passDescriptor = <GPURenderPassDescriptor> this._passDescriptor!
         let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())
         // TODO: clear color
         
@@ -146,7 +243,7 @@ export default class KQueue implements GPUQueue {
             if (i > 255) dontKnow()
             verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations:[]})
         }
-        let output = <Context2DTexture> this._passDescriptor!.colorAttachments[0].attachment._texture
+        let output = <Context2DTexture> passDescriptor.colorAttachments[0].attachment._texture
         if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
         let imageData = output._context.getImageData(0, 0, output._context.canvas.width, output._context.canvas.height)
         for (let i = 0; i < vertexCount / 3; i++) {

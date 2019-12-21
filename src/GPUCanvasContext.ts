@@ -87,6 +87,10 @@ export class Context2DTexture implements GPUTexture {
         throw new Error("Method not implemented.");
     }
 
+    _getPixel(x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number {
+        throw new Error("Method not implemented.");
+    }
+
     _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer {
         throw new Error("Method not implemented.");
     }

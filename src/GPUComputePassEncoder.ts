@@ -5,10 +5,13 @@ import { GPUBindGroup } from "./bindGroups";
 
 export class GPUComputePassEncoder {
     
-    _commands: Array<KCommand> = []
     private _isFinished = false
-    constructor(public _descriptor: GPUComputePassDescriptor) {
+    constructor(descriptor: GPUComputePassDescriptor, public _commands: KCommand[]) {
         this._checkState()
+        this._commands.push({
+            name: 'setDescriptor',
+            args: [descriptor]
+        })
     }
     setPipeline(pipeline: GPUComputePipeline) {
         this._checkState()
@@ -17,7 +20,7 @@ export class GPUComputePassEncoder {
             args: [pipeline]
         })
     }
-    setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets: Array<number> = []) {
+    setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets: number[] = []) {
         this._checkState()
         this._commands.push({
             name: 'setBindGroup',

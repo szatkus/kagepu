@@ -1,7 +1,8 @@
 import GPUPipelineLayout from './GPUPipelineLayout';
 import GPUShaderModule from './GPUShaderModule';
-import { GPUBufferSize } from './buffers';
+import { GPUBufferSize, GPUBuffer } from './buffers';
 import GPUBindGroupLayout from './GPUBindGroupLayout';
+import { GPUTexture } from './textures';
 
 export interface GPUObjectDescriptorBase {
   label?: string
@@ -162,4 +163,24 @@ export interface GPUComputePassDescriptor extends GPUObjectDescriptorBase {
 export interface GPUProgrammableStageDescriptor {
   module: GPUShaderModule
   entryPoint: string
+}
+
+export interface GPUBufferCopyView {
+  buffer: GPUBuffer, 
+  offset?: GPUBufferSize,
+  rowPitch: number,
+  imageHeight: number,
+};
+
+export interface GPUOrigin3D {
+  x?: number,
+  y?: number,
+  z?: number
+}
+
+export interface GPUTextureCopyView {
+  texture: GPUTexture,
+  mipLevel?: number,
+  arrayLayer?: number,
+  origin?: GPUOrigin3D;
 }

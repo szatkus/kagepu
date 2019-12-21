@@ -15,6 +15,7 @@ export interface GPUTexture {
   createView(descriptor: GPUTextureViewDescriptor): GPUTextureView
   _getPixelSize(): number,
   _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
+  _getPixel(x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number
   _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer
 }
 
@@ -26,6 +27,7 @@ interface MipMap {
 }
 
 export class KTexture implements GPUTexture {
+  
   _descriptor: GPUTextureDescriptor
   _buffers: Array<Array<MipMap>> = []
   _mipLevelCount: number
@@ -132,6 +134,11 @@ export class KTexture implements GPUTexture {
   _putPixel(pixel: number, x: number, y: number, z: number, arrayLevel: number = 0, mipLevel: number = 0) {
     let mipmap = this._buffers[arrayLevel][mipLevel]
     mipmap.buffer[z * mipmap.height * mipmap.width + y * mipmap.width + x] = pixel
+  }
+
+  _getPixel(x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number {
+    let mipmap = this._buffers[arrayLevel][mipLevel]
+    return mipmap.buffer[z * mipmap.height * mipmap.width + y * mipmap.width + x]
   }
 
   _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer {

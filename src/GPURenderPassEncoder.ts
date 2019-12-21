@@ -60,10 +60,13 @@ export interface KCommand {
 
 export class GPURenderPassEncoder {
     
-    _commands: Array<KCommand> = []
     private _isFinished = false
-    constructor(public _descriptor: GPURenderPassDescriptor) {
+    constructor(descriptor: GPURenderPassDescriptor, public _commands: Array<KCommand>) {
         this._checkState()
+        this._commands.push({
+            name: 'setDescriptor',
+            args: [descriptor]
+        })
     }
     setPipeline(pipeline: GPURenderPipeline) {
         this._checkState()
