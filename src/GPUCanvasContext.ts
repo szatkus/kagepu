@@ -71,12 +71,20 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
 }
 
 export class Context2DTexture implements GPUTexture {
+    
     constructor(public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
         
     }
 
     createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {
         return new GPUTextureView(this, descriptor)
+    }
+
+    _getArrayLayerCount(): number {
+        throw new Error("Method not implemented.");
+    }
+    _getMipmapLevelCount(): number {
+        throw new Error("Method not implemented.");
     }
 
     _getPixelSize(): number {

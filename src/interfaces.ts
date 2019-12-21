@@ -184,3 +184,4 @@ export interface GPUTextureCopyView {
   arrayLayer?: number,
   origin?: GPUOrigin3D;
 }
+

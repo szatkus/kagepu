@@ -4,6 +4,7 @@ import { GPUBindGroup } from "./bindGroups";
 import dontKnow from "./dontKnow";
 import { GPUObjectDescriptorBase } from "./interfaces";
 import { GPUTextureView } from "./textures";
+import { GPUColor } from "./colors";
 
 enum GPULoadOp {
     "clear",
@@ -14,22 +15,12 @@ enum GPUStoreOp {
     "store"
 }
 
-interface GPUColorDict {
-    r: number,
-    g: number,
-    b: number,
-    a: number
-}
-
-type GPUColor = Array<number> | GPUColorDict
-
 interface GPURenderPassColorAttachmentDescriptor {
     attachment: GPUTextureView,
     resolveTarget?: GPUTextureView,
 
-    loadOp: GPULoadOp,
     storeOp: GPUStoreOp,
-    clearColor?: GPUColor  // defaults to {r: 0.0, g: 0.0, b: 0.0, a: 1.0}
+    loadValue: GPULoadOp | GPUColor
 };
 
 interface GPURenderPassDepthStencilAttachmentDescriptor {

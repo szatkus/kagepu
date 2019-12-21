@@ -10,6 +10,8 @@ import { Context2DTexture } from "./GPUCanvasContext";
 import { executeShader } from "./spirv/execution";
 import { GPUComputePipeline } from "./GPUComputePipeline";
 import { GPUFenceDescriptor, GPUFence } from "./GPUFence";
+import { GPUTexture } from "./textures";
+import { GPUColor, colorToNumber } from "./colors";
 
 export interface VertexInputs {
     buffer: ArrayBuffer,
@@ -72,6 +74,11 @@ export default class KQueue implements GPUQueue {
         (this as any)[methodName].apply(this, command.args)
     }
     __command__setDescriptor(descriptor: GPURenderPassDescriptor | GPUComputePassDescriptor) {
+        let defaultColor = { r: 0, b: 0, g: 0, a: 1}
+        let renderPassDescriptor = <GPURenderPassDescriptor> descriptor
+        for (let attachment of renderPassDescriptor.colorAttachments || []) {
+            clear(attachment.attachment._texture, <GPUColor> attachment.loadValue || defaultColor)
+        }
         this._passDescriptor = descriptor
     }
     __command__setPipeline(pipeline: GPURenderPipeline) {
@@ -351,3 +358,18 @@ function copyBytes(output: Uint8Array, outputOffset: number, length: number, inp
 }
 
 const dataLength: Map<String, number> = new Map([['float4', 16]])
+
+function clear(texture: GPUTexture, color: GPUColor) {
+    if (texture._getPixelSize() !== 32) {
+        dontKnow()
+    }
+    for (let arrayLayer = 0; arrayLayer < texture._getArrayLayerCount(); arrayLayer++) {
+        for (let mipmapLevel = 0; mipmapLevel < texture._getMipmapLevelCount(); mipmapLevel++) {
+            let view = new Uint32Array(texture._getBuffer(arrayLayer, mipmapLevel))
+            for (let i = 0; i < view.length; i++) {
+                let asd = colorToNumber(color)
+                view[i] = colorToNumber(color)
+            }
+        }
+    }
+}
