@@ -72,8 +72,16 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
 
 export class Context2DTexture implements GPUTexture {
     
+    
     constructor(public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
         
+    }
+
+    _getHeight(): number {
+        return this._context.canvas.height
+    }
+    _getWidth(): number {
+        return this._context.canvas.width
     }
 
     createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {

@@ -19,6 +19,8 @@ export interface GPUTexture {
   _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer
   _getArrayLayerCount(): number
   _getMipmapLevelCount(): number
+  _getHeight(): number
+  _getWidth(): number
 }
 
 interface MipMap {
@@ -66,6 +68,13 @@ export class KTexture implements GPUTexture {
       }
     }
      
+  }
+
+  _getHeight(): number {
+    return this._descriptor.size.height!
+  }
+  _getWidth(): number {
+    return this._descriptor.size.width!
   }
 
   createView(descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {

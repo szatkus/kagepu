@@ -219,7 +219,6 @@ export default class KQueue implements GPUQueue {
     __command__draw(vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
         let passDescriptor = <GPURenderPassDescriptor> this._passDescriptor!
         let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())
-        // TODO: clear color
         
         let offsets: number[] = []
         let vertexStage = pipeline._descriptor.vertexStage
@@ -254,30 +253,28 @@ export default class KQueue implements GPUQueue {
             builtins[42] = i
             verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins})
         }
-        let output = <Context2DTexture> passDescriptor.colorAttachments[0].attachment._texture
-        if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
-        let imageData = output._context.getImageData(0, 0, output._context.canvas.width, output._context.canvas.height)
+        let output = passDescriptor.colorAttachments[0].attachment._texture
+        if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 ) dontKnow()
+        let width = output._getWidth()
+        let height = output._getHeight()
         for (let i = 0; i < vertexCount / 3; i++) {
-            for (let y = 0; y < imageData.height; y++) {
-                for (let x = 0; x < imageData.width; x++) {
+            for (let y = 0; y < output._getHeight(); y++) {
+                for (let x = 0; x < output._getWidth(); x++) {
                     
-                    let normalizedX = (x / imageData.width) * 2 - 1
-                    let normalizedY = ((imageData.height - y) / imageData.height) * 2 - 1
+                    let normalizedX = (x / width) * 2 - 1
+                    let normalizedY = ((height - y) / height) * 2 - 1
                     const dir1 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
                     const dir2 = checkDirection(normalizedX, normalizedY, verticiesData[2].position[0], verticiesData[2].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
                     const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
-                    if (dir1 == -1 && dir2 == 1 && dir3 == -1) {
+                    if ((dir1 == -1 && dir2 == 1 && dir3 == -1) || dir1 === 0 || dir2 === 0 || dir3 === 0) {
                         let inputBuffer = new ArrayBuffer(32)
                         let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: []})
-                        imageData.data[(y * imageData.height + x) * 4] = pixelData.color[0] * 255
-                        imageData.data[(y * imageData.height + x) * 4 + 1] = pixelData.color[1] * 255
-                        imageData.data[(y * imageData.height + x) * 4 + 2] = pixelData.color[2] * 255
-                        imageData.data[(y * imageData.height + x) * 4 + 3] = pixelData.color[3] * 255
+                        // no idea what to do when a texture has more levels
+                        output._putPixel(colorToNumber(pixelData.color), x, y, 0, 0, 0)
                     }
                 }
             }
         }
-        output._context.putImageData(imageData, 0, 0)
     }
     __command__drawIndexed(indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
         let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())

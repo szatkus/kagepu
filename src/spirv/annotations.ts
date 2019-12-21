@@ -25,6 +25,10 @@ export class Binding implements Decoration {
     constructor(public value: number) {}
 }
 
+export class RelaxedPrecision implements Decoration {
+
+}
+
 export class Decorations {
     decorations: Array<Array<Decoration>> = []
 
@@ -49,6 +53,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
             let decoration
             if (decorationCode == 2) {
                 decoration = 2
+            } else if (decorationCode == 0) {
+                decoration = new RelaxedPrecision()
+                console.debug(`Decorate $${targetId} with RelaxedPrecision()`)
             } else if (decorationCode == 11) {
                 decoration = new Builtin(state.consumeWord())
                 console.debug(`Decorate $${targetId} with Builtin(${decoration.value})`)

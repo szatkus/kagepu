@@ -22,7 +22,7 @@ In the current state the library should work in most modern browsers (maybe even
  - basic implementation of SPIR-V interpreter
  - it can draw a triangle (with horrible performance)
  - simple compute
- - some tests from the Conformance Test Suite pass (183/424)
+ - some tests from the Conformance Test Suite pass (202/425)
  - not much else
 
 WSL or MSL isn't supported, just pure SPIR-V, so you better use GLSlang.
