@@ -18,8 +18,8 @@ interface Frame {
 
 export class Execution {
     
-    heap: any[] = []
-    heapSnapshot: String[] = []
+    private heap: any[] = []
+    private heapSnapshot: String[] = []
     private functionMemory: Memory
     private globalMemory: Memory
     private constantMemory: Memory
@@ -88,8 +88,17 @@ export class Execution {
         dontKnow()
         return this.getGlobalMemory()
     }
+
     getGlobalMemory(): Memory {
         return this.globalMemory
+    }
+
+    get(resultId: number): any {
+        return this.heap[resultId]
+    }
+
+    put(resultId: number, object: any) {
+        this.heap[resultId] = object
     }
 
     static start(input: Memory, output: Memory, storageBuffer: Memory, module: CompiledModule, entryPoint: string) {

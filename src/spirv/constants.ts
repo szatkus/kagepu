@@ -14,10 +14,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 if (state.wordCount > 4) dontKnow()
                 let value = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
+                    let type = <Type> execution.get(typeId)
                     let pointer = execution.getGlobalMemory().createVariable(type, resultId)
                     pointer.writeUint32(value)
-                    execution.heap[resultId] = pointer
+                    execution.put(resultId, pointer)
                 })
                 console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)
                 state.processed = true
@@ -30,8 +30,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let constituents = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new ConstantComposite(type, constituents)
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new ConstantComposite(type, constituents))
                 })
                 console.debug(`$${resultId} = OpConstantComposite $${typeId} ${constituents}`)
                 state.processed = true

@@ -14,9 +14,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let leftOperandId = state.consumeWord()
                 let rightOperandId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = execution.heap[resultTypeId]
-                    let leftOperand = <Pointer> execution.heap[leftOperandId]
-                    let rightOperand = <Pointer> execution.heap[rightOperandId]
+                    let resultType = execution.get(resultTypeId)
+                    let leftOperand = <Pointer> execution.get(leftOperandId)
+                    let rightOperand = <Pointer> execution.get(rightOperandId)
                     let count = resultType instanceof TypeVector ? resultType.count : 1
                     let result = new Float32Array(count)
                     let leftVectorData = leftOperand.readFloat32Array()
@@ -24,7 +24,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     for (let i = 0; i < resultType.count; i++) {
                         result[i] = leftVectorData[i] * rightVectorData[i]
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpFMul $${leftOperandId} $${rightOperandId}`)
                 state.processed = true
@@ -38,18 +38,18 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let vectorId = state.consumeWord()
                 let scalarId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = <TypeVector> execution.heap[resultTypeId]
+                    let resultType = <TypeVector> execution.get(resultTypeId)
                     if (!(resultType.type instanceof TypeFloat) || resultType.type.width !== 32) {
                         dontKnow()
                     }
-                    let vector = <Pointer> execution.heap[vectorId]
-                    let scalar = <Pointer> execution.heap[scalarId]
+                    let vector = <Pointer> execution.get(vectorId)
+                    let scalar = <Pointer> execution.get(scalarId)
                     let result = new Float32Array(resultType.count)
                     let vectorData = vector.readFloat32Array()
                     for (let i = 0; i < resultType.count; i++) {
                         result[i] = vectorData[i] * scalar.readFloat32()
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpMatrixTimesVector $${vectorId} $${scalarId}`)
                 state.processed = true
@@ -63,12 +63,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let matrixId = state.consumeWord()
                 let vectorId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = <TypeVector> execution.heap[resultTypeId]
+                    let resultType = <TypeVector> execution.get(resultTypeId)
                     if (!(resultType.type instanceof TypeFloat) || resultType.type.width !== 32) {
                         dontKnow()
                     }
-                    let matrix = <Pointer> execution.heap[matrixId]
-                    let vector = <Pointer> execution.heap[vectorId]
+                    let matrix = <Pointer> execution.get(matrixId)
+                    let vector = <Pointer> execution.get(vectorId)
                     let result = new Float32Array(resultType.count)
                     let matrixType = <TypeMatrix> matrix.type
                     let matrixData = matrix.readFloat32Array()
@@ -82,7 +82,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                         }
                         result[i] = accumulator
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpMatrixTimesVector $${matrixId} $${vectorId}`)
                 state.processed = true
@@ -96,12 +96,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let leftMatrixId = state.consumeWord()
                 let rightMatrixId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = <TypeMatrix> execution.heap[resultTypeId]
+                    let resultType = <TypeMatrix> execution.get(resultTypeId)
                     if (!(resultType.type instanceof TypeFloat) || resultType.type.width !== 32) {
                         dontKnow()
                     }
-                    let leftMatrix = <Pointer> execution.heap[leftMatrixId]
-                    let rightMatrix = <Pointer> execution.heap[rightMatrixId]
+                    let leftMatrix = <Pointer> execution.get(leftMatrixId)
+                    let rightMatrix = <Pointer> execution.get(rightMatrixId)
                     let result = new Float32Array(resultType.columns * resultType.rows)
                     let leftMatrixType = <TypeMatrix> leftMatrix.type
                     let rightMatrixType = <TypeMatrix> rightMatrix.type
@@ -118,7 +118,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                             result[r + c * resultType.rows] = accumulator
                         }
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpMatrixTimesMatrix $${leftMatrixId} $${rightMatrixId}`)
                 state.processed = true

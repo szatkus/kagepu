@@ -9,9 +9,9 @@ compiler.addInstruction(100, (state: CompilationState, module: CompiledModule) =
     let resultId = state.consumeWord()
     let imageId = state.consumeWord()
     module.flow.push((execution: Execution) => {
-        let type = <TypeImage> execution.heap[typeId]
-        let image = <SampledImage> execution.heap[imageId]
-        execution.heap[resultId] = image
+        let type = <TypeImage> execution.get(typeId)
+        let image = <SampledImage> execution.get(imageId)
+        execution.put(resultId, image)
     })
     console.debug(`OpImage $${typeId} $${resultId} $${imageId}`)
 })

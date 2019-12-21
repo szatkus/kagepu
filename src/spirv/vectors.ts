@@ -16,12 +16,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let components = state.consumeArray()
                 module.flow.push((execution: Execution) => {
                     const UNDEFINED = 0xFFFFFFFF
-                    let resultType = <TypeVector> execution.heap[resultTypeId]
+                    let resultType = <TypeVector> execution.get(resultTypeId)
                     if (!(resultType.type instanceof TypeFloat) || resultType.type.width !== 32) {
                         dontKnow()
                     }
-                    let leftVector = <Pointer> execution.heap[leftVectorId]
-                    let rightVector = <Pointer> execution.heap[rightVectorId]
+                    let leftVector = <Pointer> execution.get(leftVectorId)
+                    let rightVector = <Pointer> execution.get(rightVectorId)
                     let result = new Float32Array(resultType.count)
                     components.forEach((component, index) => {
                         if (component === UNDEFINED) {
@@ -34,7 +34,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                             result[index] = rightVector.readFloat32Array()[component]
                         }
                     })
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpVectorShuffle ${leftVectorId} ${rightVectorId}`)
                 state.processed = true

@@ -14,9 +14,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let leftOperandId = state.consumeWord()
                 let rightOperandId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = execution.heap[resultTypeId]
-                    let leftOperand = <Pointer> execution.heap[leftOperandId]
-                    let rightOperand = <Pointer> execution.heap[rightOperandId]
+                    let resultType = execution.get(resultTypeId)
+                    let leftOperand = <Pointer> execution.get(leftOperandId)
+                    let rightOperand = <Pointer> execution.get(rightOperandId)
                     let count = resultType instanceof TypeVector ? resultType.count : 1
                     let result = new Float32Array(count)
                     let leftVectorData = leftOperand.readFloat32Array()
@@ -24,7 +24,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     for (let i = 0; i < resultType.count; i++) {
                         result[i] = leftVectorData[i] + rightVectorData[i]
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultTypeId} = OpFAdd $${leftOperandId} $${rightOperandId}`)
                 state.processed = true
@@ -38,9 +38,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let leftOperandId = state.consumeWord()
                 let rightOperandId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let resultType = execution.heap[resultTypeId]
-                    let leftOperand = <Pointer> execution.heap[leftOperandId]
-                    let rightOperand = <Pointer> execution.heap[rightOperandId]
+                    let resultType = execution.get(resultTypeId)
+                    let leftOperand = <Pointer> execution.get(leftOperandId)
+                    let rightOperand = <Pointer> execution.get(rightOperandId)
                     let count = resultType instanceof TypeVector ? resultType.count : 1
                     let result = new Float32Array(count)
                     let leftVectorData = leftOperand.readFloat32Array()
@@ -48,7 +48,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     for (let i = 0; i < resultType.count; i++) {
                         result[i] = leftVectorData[i] - rightVectorData[i]
                     }
-                    execution.heap[resultId] = new Pointer(new Memory(result.buffer), 0, resultType)
+                    execution.put(resultId, new Pointer(new Memory(result.buffer), 0, resultType))
                 })
                 console.debug(`$${resultId} = OpFSub $${leftOperandId} $${rightOperandId}`)
                 state.processed = true

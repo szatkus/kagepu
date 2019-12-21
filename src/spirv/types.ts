@@ -183,7 +183,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
             {
                 let resultId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = new TypeVoid
+                    execution.put(resultId, new TypeVoid)
                 })
                 console.debug(`$${resultId} = OpTypeVoid`)
                 state.processed = true
@@ -196,7 +196,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let width = state.consumeWord()
                 let signed = state.consumeWord() == 1
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = new TypeInt(width, signed)
+                    execution.put(resultId, new TypeInt(width, signed))
                 })
                 console.debug(`$${resultId} = OpTypeInt ${width}  ${signed}`)
                 state.processed = true
@@ -208,7 +208,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let width = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = new TypeFloat(width)
+                    execution.put(resultId, new TypeFloat(width))
                 })
                 console.debug(`$${resultId} = OpTypeFloat ${width}`)
                 state.processed = true
@@ -221,8 +221,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let count = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeVector(type, count)
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new TypeVector(type, count))
                 })
                 console.debug(`$${resultId} = OpTypeVector $${typeId} ${count}`)
                 state.processed = true
@@ -235,8 +235,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let count = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <TypeVector> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeMatrix(type, count)
+                    let type = <TypeVector> execution.get(typeId)
+                    execution.put(resultId, new TypeMatrix(type, count))
                 })
                 console.debug(`$${resultId} = OpTypeMatrix $${typeId} ${count}`)
                 state.processed = true
@@ -255,8 +255,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let format = state.consumeWord()
                 let access = state.pos < state.endPos ? state.consumeWord() : AccessQualifier.ReadWrite
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeImage({
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new TypeImage({
                         type,
                         dimensionality,
                         depth,
@@ -265,7 +265,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                         sampled,
                         format,
                         access
-                    })
+                    }))
                 })
                 console.debug(`$${resultId} = OpTypeImage $${typeId} ${dimensionality} ${depth} ${access}`)
                 state.processed = true
@@ -276,7 +276,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
             {
                 let resultId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = new TypeSampler()
+                    execution.put(resultId, new TypeSampler())
                 })
                 console.debug(`$${resultId} = OpTypeSampler`)
                 state.processed = true
@@ -288,8 +288,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let typeId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = execution.heap[typeId]
-                    execution.heap[resultId] = new TypeSampledImage(type)
+                    let type = execution.get(typeId)
+                    execution.put(resultId, new TypeSampledImage(type))
                 })
                 console.debug(`$${resultId} = OpTypeSampler`)
                 state.processed = true
@@ -302,8 +302,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let count = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeArray(type, count)
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new TypeArray(type, count))
                 })
                 console.debug(`$${resultId} = OpTypeArray $${typeId} ${count}`)
                 state.processed = true
@@ -315,8 +315,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let typeIds: number[] = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let types = typeIds.map(t => execution.heap[t])
-                    execution.heap[resultId] = new TypeStruct(types)
+                    let types = typeIds.map(t => execution.get(t))
+                    execution.put(resultId, new TypeStruct(types))
                 })
                 console.debug(`$${resultId} = OpTypeStruct ${typeIds}`)
                 state.processed = true
@@ -329,8 +329,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let storageClass = state.consumeWord()
                 let typeId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypePointer(storageClass, type)
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new TypePointer(storageClass, type))
                 })
                 console.debug(`$${resultId} = OpTypePointer ${storageClass} $${typeId}`)
                 state.processed = true
@@ -343,8 +343,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let typeId = state.consumeWord()
                 let argumentsIds = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = new TypeFunction(type, argumentsIds.map(id => <Type> execution.heap[id]))
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, new TypeFunction(type, argumentsIds.map(id => <Type> execution.get(id))))
                 })
                 console.debug(`$${resultId} = OpTypeFunction $${typeId}`)
                 state.processed = true

@@ -18,11 +18,11 @@ compiler.addInstruction(86, (state: CompilationState, module: CompiledModule) =>
     let imageId = state.consumeWord()
     let samplerId = state.consumeWord()
     module.flow.push((execution: Execution) => {
-        let type = <TypeSampledImage> execution.heap[typeId]
-        let image = <Pointer> execution.heap[imageId]
-        let sampler = <Pointer> execution.heap[samplerId]
+        let type = <TypeSampledImage> execution.get(typeId)
+        let image = <Pointer> execution.get(imageId)
+        let sampler = <Pointer> execution.get(samplerId)
         let sampledImage = new SampledImage(type, <GPUTexture> image.getObject(), <GPUSampler> sampler.getObject())
-        execution.heap[resultId] = sampledImage
+        execution.put(resultId, sampledImage)
     })
     console.debug(`OpSampledImage $${typeId} $${resultId} $${imageId} $${samplerId}`)
 })

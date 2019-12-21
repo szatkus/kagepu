@@ -12,7 +12,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         case 254:
             let valueId = state.consumeWord()
             module.flow.push((execution: Execution) => {
-                execution.returnedValue = execution.heap[valueId]
+                execution.returnedValue = execution.get(valueId)
             })
             console.debug(`OpReturn ${valueId}`)
             state.processed = true
@@ -22,7 +22,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
             {
                 let resultId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = "noidea"
+                    execution.put(resultId, 'noidea')
                 })
                 console.debug(`$${resultId} = OpLabel`)
                 state.processed = true

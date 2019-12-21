@@ -36,7 +36,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let string = state.consumeString()
                 module.flow.push((execution: Execution) => {
-                    execution.heap[resultId] = string
+                    execution.put(resultId, string)
                 })
                 console.debug(`$${resultId} = OpString ${string}`)
                 state.processed = true

@@ -12,11 +12,11 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 
                 let constituents = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = execution.getGlobalMemory().createVariable(type, resultId)
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, execution.getGlobalMemory().createVariable(type, resultId))
                     let i = 0
                     constituents.forEach(c => {
-                        execution.heap[resultId].setIndex(i, execution.heap[c].read())
+                        execution.get(resultId).setIndex(i, execution.get(c).read())
                         i++
                     })
                 })
@@ -32,12 +32,12 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let compositeId = state.consumeWord()
                 let indexes = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    let composite = execution.heap[compositeId]
+                    let type = <Type> execution.get(typeId)
+                    let composite = execution.get(compositeId)
                     indexes.forEach(i => {
                         composite = composite.getIndex(i)
                     })
-                    execution.heap[resultId] = composite
+                    execution.put(resultId, composite)
 
                 })
                 console.debug(`$${resultId} = OpCompositeExtract ${typeId} $${compositeId} ${indexes}`)

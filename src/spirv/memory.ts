@@ -258,11 +258,11 @@ export class ConstantComposite {
 
 
 export function compile (state: CompilationState, module: CompiledModule) {
-    function getData(object: any, heap: any[]): number[] {
+    function getData(object: any, execution: Execution): number[] {
         let result: number[] = []
         if (object instanceof ConstantComposite) {
             for (let c of object.constituents) {
-                result = result.concat(getData(heap[c], heap))
+                result = result.concat(getData(execution.get(c), execution))
             }
             return result
         }
@@ -282,14 +282,14 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let storageClass = state.consumeWord()
                 let initializerId = state.pos < state.endPos ? state.consumeWord() : 0
                 module.flow.push((execution: Execution) => {
-                    let pointerType = <TypePointer> execution.heap[typeId]
+                    let pointerType = <TypePointer> execution.get(typeId)
                     let type = pointerType.type
                     let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
                     if (initializerId !== 0) {
-                        let initializer = execution.heap[initializerId]
+                        let initializer = execution.get(initializerId)
                         debugger
                     }
-                    execution.heap[resultId] = pointer
+                    execution.put(resultId, pointer)
                 })
                 console.debug(`$${resultId} = OpVariable $${typeId} ${storageClass}`)
                 state.processed = true
@@ -303,8 +303,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let resultId = state.consumeWord()
                 let loadId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let type = <Type> execution.heap[typeId]
-                    execution.heap[resultId] = execution.heap[loadId]
+                    let type = <Type> execution.get(typeId)
+                    execution.put(resultId, execution.get(loadId))
                 })
                 console.debug(`$${resultId} = OpLoad ${typeId} $${loadId}`)
                 state.processed = true
@@ -317,9 +317,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let pointerId = state.consumeWord()
                 let objectId = state.consumeWord()
                 module.flow.push((execution: Execution) => {
-                    let pointer = execution.heap[pointerId]
-                    let object = execution.heap[objectId]
-                    let data = getData(object, execution.heap)
+                    let pointer = execution.get(pointerId)
+                    let object = execution.get(objectId)
+                    let data = getData(object, execution)
                     pointer.write(data)
                 })
                 console.debug(`OpStore $${pointerId} $${objectId}`)
@@ -334,13 +334,13 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 let baseId = state.consumeWord()
                 let indexes = state.consumeArray()
                 module.flow.push((execution: Execution) => {
-                    let type = <TypePointer> execution.heap[typeId]
-                    let base = execution.heap[baseId]
+                    let type = <TypePointer> execution.get(typeId)
+                    let base = execution.get(baseId)
                     indexes.forEach(i => {
-                        let index = execution.heap[i].readValue()
+                        let index = execution.get(i).readValue()
                         base = base.getIndex(index)
                     })
-                    execution.heap[resultId] = base
+                    execution.put(resultId, base)
                 })
                 
                 console.debug(`$${resultId} = OpAccessChain $${typeId} $${baseId} ${indexes}`)
