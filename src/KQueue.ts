@@ -36,11 +36,13 @@ export default class KQueue implements GPUQueue {
         fence._value = signalValue
     }
     submit(buffers: KCommandBuffer[]) {
+        // console.profile()
         for (let commandBuffer of buffers) {
             for (let command of commandBuffer._commands) {
                 this._executeCommand(command)
             }
         }
+        // console.profileEnd()
     }
     async _runRenderPass(pass: GPURenderPassEncoder) {
         return new Promise((resolve, reject) => {
@@ -244,9 +246,6 @@ export default class KQueue implements GPUQueue {
                 }
                 offsets[j] = offset + vertexBufferInput.stride
             }*/
-            console.debug(vertexStage.entryPoint)
-            console.debug(vertexStage.module)
-            console.debug(new Float32Array(inputBuffer))
             inputBufferView[0] = i
             if (i > 255) dontKnow()
             let builtins = []
@@ -266,7 +265,7 @@ export default class KQueue implements GPUQueue {
                     const dir1 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
                     const dir2 = checkDirection(normalizedX, normalizedY, verticiesData[2].position[0], verticiesData[2].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
                     const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
-                    if ((dir1 == -1 && dir2 == 1 && dir3 == -1) || dir1 === 0 || dir2 === 0 || dir3 === 0) {
+                    if ((dir1 == -1 && dir2 == 1 && dir3 == -1)) {
                         let inputBuffer = new ArrayBuffer(32)
                         let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: []})
                         // no idea what to do when a texture has more levels
@@ -327,11 +326,11 @@ function checkDirection(x1: number, y1: number, x2: number, y2: number, x3: numb
     } else {
         yy = y2 + ((x1 - x2) / (x3 - x2)) * (y3 - y2)
     }
-    if (y1 < yy) {
-        return -1
-    }
-    if (y1 > yy) {
+    if (y1 > yy * 1.01) {
         return 1
+    }
+    if (y1 * 1.01 < yy) {
+        return -1
     }
     return 0
 }
@@ -371,7 +370,6 @@ function clear(texture: GPUTexture, color: GPUColor) {
         for (let mipmapLevel = 0; mipmapLevel < texture._getMipmapLevelCount(); mipmapLevel++) {
             let view = new Uint32Array(texture._getBuffer(arrayLayer, mipmapLevel))
             for (let i = 0; i < view.length; i++) {
-                let asd = colorToNumber(color)
                 view[i] = colorToNumber(color)
             }
         }

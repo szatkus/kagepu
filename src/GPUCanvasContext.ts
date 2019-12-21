@@ -84,23 +84,25 @@ export class Context2DTexture implements GPUTexture {
         return this._context.canvas.width
     }
 
-    createView(descriptor: GPUTextureViewDescriptor): GPUTextureView {
+    createView(descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
         return new GPUTextureView(this, descriptor)
     }
 
     _getArrayLayerCount(): number {
-        throw new Error("Method not implemented.");
+        return 1
     }
     _getMipmapLevelCount(): number {
-        throw new Error("Method not implemented.");
+        return 1
     }
 
     _getPixelSize(): number {
-        throw new Error("Method not implemented.");
+        return 32
     }
     
     _putPixel(pixel: number, x: number, y: number, z: number): void {
-        throw new Error("Method not implemented.");
+        let imageData = new ImageData(1, 1)
+        new Uint32Array(imageData.data.buffer)[0] = pixel
+        this._context.putImageData(imageData, x, y)
     }
 
     _getPixel(x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number {
@@ -108,7 +110,11 @@ export class Context2DTexture implements GPUTexture {
     }
 
     _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer {
-        throw new Error("Method not implemented.");
+        let imageData = this._context.getImageData(0, 0, this._getWidth(), this._getHeight())
+        setTimeout(() => {
+            this._context.putImageData(imageData, 0, 0)
+        }, 1)
+        return imageData.data.buffer
     }
 }
 

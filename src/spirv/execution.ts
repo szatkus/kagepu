@@ -52,7 +52,7 @@ export class Execution {
             if (func instanceof Function) {
                 func(this)
             }
-            this.compareSnapshots()
+            // this.compareSnapshots()
             if (this.inFunction !== 0) {
                 let currentFunction = <FunctionDeclaration> this.heap[this.inFunction]
                 i++
@@ -109,7 +109,7 @@ export class Execution {
         this.frames.push(this.currentFrame)
         for (let i = 0; i < func.body.length; i++) {
             func.body[i](this)
-            this.compareSnapshots()
+            // this.compareSnapshots()
         }
         return this.returnedValue
     }
