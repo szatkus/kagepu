@@ -16,10 +16,11 @@ import { GPUColor, colorToNumber } from "./colors";
 export interface VertexInputs {
     buffer: ArrayBuffer,
     bindGroups: GPUBindGroup[],
-    locations: Array<{
+    locations: {
         start: number,
         length: number
-    }>
+    }[],
+    builtins: number[]
 }
 
 export default class KQueue implements GPUQueue {
@@ -210,7 +211,8 @@ export default class KQueue implements GPUQueue {
         let inputs: VertexInputs = {
             buffer: inputBuffer,
             bindGroups: this._bindGroups,
-            locations: []
+            locations: [],
+            builtins: []
         }
         executeComputeShader(pipeline._descriptor.computeStage, inputs)
     }
@@ -248,7 +250,9 @@ export default class KQueue implements GPUQueue {
             console.debug(new Float32Array(inputBuffer))
             inputBufferView[0] = i
             if (i > 255) dontKnow()
-            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations:[]})
+            let builtins = []
+            builtins[42] = i
+            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins})
         }
         let output = <Context2DTexture> passDescriptor.colorAttachments[0].attachment._texture
         if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 || !(output instanceof Context2DTexture) ) dontKnow()
@@ -264,7 +268,7 @@ export default class KQueue implements GPUQueue {
                     const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
                     if (dir1 == -1 && dir2 == 1 && dir3 == -1) {
                         let inputBuffer = new ArrayBuffer(32)
-                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations:[]})
+                        let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: []})
                         imageData.data[(y * imageData.height + x) * 4] = pixelData.color[0] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 1] = pixelData.color[1] * 255
                         imageData.data[(y * imageData.height + x) * 4 + 2] = pixelData.color[2] * 255
@@ -286,10 +290,13 @@ export default class KQueue implements GPUQueue {
             let inputBuffer = new ArrayBuffer(64)
             let inputBufferView = new Uint8Array(inputBuffer)
             let lastPosition = 0
+            let builtins = []
+            builtins[42] = i
             let inputs: VertexInputs = {
                 buffer: inputBuffer,
                 bindGroups: this._bindGroups,
-                locations: []
+                locations: [],
+                builtins
             }
             for (let j = 0; j < vertexState.vertexBuffers.length; j++) {
                 let descriptor = vertexState.vertexBuffers[j]

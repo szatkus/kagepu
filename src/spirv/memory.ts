@@ -3,7 +3,7 @@ import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatr
 import { CompilationState, CompiledModule } from "./compilation"
 import { Execution } from "./execution"
 import { VertexInputs } from "../KQueue"
-import { Decorations, Location, DescriptorSet, Binding } from "./annotations"
+import { Decorations, Location, DescriptorSet, Binding, Builtin } from "./annotations"
 import { GPUBufferBinding } from "../bindGroups"
 import { GPUTextureView } from "../textures"
 import { GPUSampler } from "../samplers"
@@ -201,27 +201,6 @@ export class InputMemory extends Memory {
         super(inputs.buffer)
     }
 
-    allocateMemory(size: number) {
-        throw new Error("Input memory is read-only.")
-        return 0
-    }
-
-    store(pointer: Pointer, value: number[]) {
-        throw new Error("Input memory is read-only.")
-    }
-
-    clear() {
-        throw new Error("Input memory is read-only.")
-    }
-
-    write(pointer: Pointer, data: number[]) {
-        throw new Error("Input memory is read-only.")
-    }
-
-    writeUint32(address: number, value: number) {
-        throw new Error("Input memory is read-only.")
-    }
-
     createVariable(type: Type, resultId: number, value: number[] = []): Pointer {
         if (value.length > 0) {
             dontKnow()
@@ -248,6 +227,13 @@ export class InputMemory extends Memory {
             if (binding.resource instanceof GPUSampler) {
                 return new Pointer(new Memory(new ArrayBuffer(0)), 0, type, binding.resource)
             }
+        }
+        let builtinDecoration: Builtin = this.decorations.getSingleDecoration(resultId, Builtin)
+        if (builtinDecoration) {
+            let builtinValue = this.inputs.builtins[builtinDecoration.value]
+            let pointer =  super.createVariable(type, resultId)
+            pointer.writeUint32(builtinValue)
+            return pointer
         }
         dontKnow()
         return new Pointer(this, 0, type)

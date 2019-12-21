@@ -13,7 +13,7 @@ export class Location implements Decoration {
     constructor(public value: number) {}
 }
 
-class Builtin implements Decoration {
+export class Builtin implements Decoration {
     constructor(public value: number) {}
 }
 
