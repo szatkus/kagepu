@@ -154,7 +154,7 @@ export class Memory {
     }
 
     clear() {
-        this.int32View.fill(0)
+        this.int32View.fill(0, 0, this.lastFree)
         this.lastFree = 0
     }
 
