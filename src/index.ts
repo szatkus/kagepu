@@ -2,6 +2,9 @@ import GPUAdapter from './GPUAdapter'
 import { GPUBufferUsage, GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
 import GPUValidationError from './GPUValidationError'
+import GPUDevice from './GPUDevice';
+import { GPURenderPassEncoder } from './GPURenderPassEncoder';
+import { GPUComputePassEncoder } from './GPUComputePassEncoder';
 
 async function requestAdapter (): Promise<GPUAdapter> {
   return new GPUAdapter()
@@ -19,6 +22,9 @@ let gpu = {
     (window as any).GPUTextureUsage = GPUTextureUsage;
     (window as any).GPUValidationError = GPUValidationError;
     (window as any).GPUCanvasContext = GPUCanvasContext;
+    (window as any).GPUDevice = GPUDevice;
+    (window as any).GPURenderPassEncoder = GPURenderPassEncoder;
+    (window as any).GPUComputePassEncoder  = GPUComputePassEncoder;
     (window.navigator as any).gpu = gpu;
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
