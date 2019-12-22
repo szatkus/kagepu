@@ -14,18 +14,20 @@ import GPUQueue from './GPUQueue';
 import GPUError from './GPUError';
 import KQueue from './KQueue';
 import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
+import GPUValidationError from './GPUValidationError'
 
 enum GPUErrorFilter {
-  "none",
-  "out-of-memory",
-  "validation"
+  NONE = 'none',
+  OUT_OF_MEMORY = 'out-of-memory',
+  VALIDATION = 'validation'
 };
 
 export default class {
   extensions = extensions
   limit = limits
   adapter: GPUAdapter
-  _filters: GPUErrorFilter[] = []
+  _filters: GPUErrorFilter = GPUErrorFilter.NONE
+  _error?: GPUError
   public defaultQueue = new KQueue()
   constructor (adapter: GPUAdapter) {
     this.adapter = adapter
@@ -38,6 +40,9 @@ export default class {
     buffer._mapped = true
     return [buffer, buffer._mapWrite()]
   }
+  /*
+   * @deprecated
+   */
   async createBufferMappedAsync (descriptor: GPUBufferDescriptor): Promise<[GPUBuffer, ArrayBuffer]> {
     return this.createBufferMapped(descriptor)
   }
@@ -63,21 +68,31 @@ export default class {
     return new GPUComputePipeline(descriptor)
   }
   createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
+    if (this._validation()) {
+      if (descriptor.layout._getBindingsCount() !== descriptor.bindings.length) {
+        this._error = new GPUValidationError('Bindings count mismatch.')
+      }
+    }
     return new GPUBindGroup(descriptor)
   }
   createCommandEncoder(descriptor?: any): GPUCommandEncoder {
     return new GPUCommandEncoder()
   }
   pushErrorScope(filter: GPUErrorFilter) {
-    this._filters.push(filter)
+    this._filters = filter
   }
   async popErrorScope(): Promise<GPUError | null> {
-    return null
+    let error = this._error
+    delete this._error
+    return error || null
   }
   /*
    * @deprecated
    */
   getQueue(): GPUQueue {
     return this.defaultQueue
+  }
+  _validation(): boolean {
+    return this._filters === GPUErrorFilter.VALIDATION
   }
 }
