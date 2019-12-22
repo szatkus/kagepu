@@ -71,7 +71,7 @@ export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
 }
 
 export class Context2DTexture implements GPUTexture {
-    
+    _imageData?: ImageData
     
     constructor(public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
         
@@ -111,10 +111,14 @@ export class Context2DTexture implements GPUTexture {
 
     _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer {
         let imageData = this._context.getImageData(0, 0, this._getWidth(), this._getHeight())
-        setTimeout(() => {
-            this._context.putImageData(imageData, 0, 0)
-        }, 1)
+        this._imageData = imageData
         return imageData.data.buffer
+    }
+
+    _flush() {
+        if (this._imageData) {
+            this._context.putImageData(this._imageData, 0, 0)
+        }
     }
 }
 

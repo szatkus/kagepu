@@ -5,8 +5,7 @@ import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from "./GPURe
 import { GPUBindGroup } from "./bindGroups";
 import { GPUBuffer, GPUBufferSize } from "./buffers";
 import dontKnow from "./dontKnow";
-import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D } from "./interfaces";
-import { Context2DTexture } from "./GPUCanvasContext";
+import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D, GPUVertexFormat } from "./interfaces";
 import { executeShader } from "./spirv/execution";
 import { GPUComputePipeline } from "./GPUComputePipeline";
 import { GPUFenceDescriptor, GPUFence } from "./GPUFence";
@@ -225,37 +224,42 @@ export default class KQueue implements GPUQueue {
         let offsets: number[] = []
         let vertexStage = pipeline._descriptor.vertexStage
         let verticiesData: any[] = []
+        
         for (let i = 0; i < vertexCount; i++) {
             let inputBuffer = new ArrayBuffer(32)
             let inputBufferView = new Uint8Array(inputBuffer)
-            // according to the specification it's a required property, but in samples it's omitted
-            /*if (pipeline._descriptor.vertexInput &&
-                pipeline._descriptor.vertexInput.vertexBuffers &&
-                pipeline._descriptor.vertexInput.vertexBuffers.length != this._vertexBuffers.length) {
-                dontKnow()
+            let vertexInput: VertexInputs = {
+                buffer: inputBuffer, 
+                bindGroups: this._bindGroups, 
+                locations: [], 
+                builtins: []
             }
             for (let j = 0; j < this._vertexBuffers.length; j++) {
                 let offset = offsets[j] || 0
                 let vertexBufferView = new Uint8Array(this._vertexBuffers[j])
-                let vertexBufferInput = this._pipeline!._descriptor.vertexInput.vertexBuffers[0]
-                if (vertexBufferInput.stepMode != 'vertex') {
+                let vertexBufferInput = pipeline._descriptor.vertexState.vertexBuffers[0]
+                if (vertexBufferInput.stepMode && vertexBufferInput.stepMode !== 'vertex') {
                     dontKnow()
                 }
-                for (let attribute of vertexBufferInput.attributeSet) {
+                for (let attribute of vertexBufferInput.attributes) {
                     copyBytes(inputBufferView, attribute.offset, dataLength.get(attribute.format)!, vertexBufferView, offset + attribute.offset)
+                    vertexInput.locations.push({
+                        start: attribute.offset,
+                        length: dataLength.get(attribute.format)!
+                    })
                 }
-                offsets[j] = offset + vertexBufferInput.stride
-            }*/
-            inputBufferView[0] = i
+                offsets[j] = offset + vertexBufferInput.arrayStride
+            }
             if (i > 255) dontKnow()
-            let builtins = []
-            builtins[42] = i
-            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins})
+            vertexInput.builtins[42] = i
+            verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, vertexInput)
         }
         let output = passDescriptor.colorAttachments[0].attachment._texture
         if (pipeline._descriptor.primitiveTopology != 'triangle-list' || vertexCount % 3 !== 0 ) dontKnow()
         let width = output._getWidth()
         let height = output._getHeight()
+        let buffer = new Uint32Array(output._getBuffer(0, 0))
+        
         for (let i = 0; i < vertexCount / 3; i++) {
             for (let y = 0; y < output._getHeight(); y++) {
                 for (let x = 0; x < output._getWidth(); x++) {
@@ -269,11 +273,13 @@ export default class KQueue implements GPUQueue {
                         let inputBuffer = new ArrayBuffer(32)
                         let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, {buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: []})
                         // no idea what to do when a texture has more levels
-                        output._putPixel(colorToNumber(pixelData.color), x, y, 0, 0, 0)
+                        buffer[x + y * width] = colorToNumber(pixelData.color)
                     }
                 }
             }
         }
+
+        output._flush()
     }
     __command__drawIndexed(indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
         let pipeline = <GPURenderPipeline> (this._pipeline ? this._pipeline : dontKnow())
@@ -360,7 +366,7 @@ function copyBytes(output: Uint8Array, outputOffset: number, length: number, inp
     }
 }
 
-const dataLength: Map<String, number> = new Map([['float4', 16]])
+const dataLength: Map<GPUVertexFormat, number> = new Map([[GPUVertexFormat.FLOAT4, 16]])
 
 function clear(texture: GPUTexture, color: GPUColor) {
     if (texture._getPixelSize() !== 32) {

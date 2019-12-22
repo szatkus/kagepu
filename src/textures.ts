@@ -21,6 +21,7 @@ export interface GPUTexture {
   _getMipmapLevelCount(): number
   _getHeight(): number
   _getWidth(): number
+  _flush(): void
 }
 
 interface MipMap {
@@ -160,6 +161,10 @@ export class KTexture implements GPUTexture {
 
   _getBuffer(arrayLayer: number, mipmap: number): ArrayBuffer {
     return this._buffers[arrayLayer][mipmap].buffer.buffer
+  }
+
+  _flush(): void {
+    
   }
 
   destroy () {
