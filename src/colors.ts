@@ -16,3 +16,13 @@ export function colorToNumber(color: GPUColor): number {
     }
     return colorToNumber([color.r, color.g, color.b, color.a])
 }
+
+export const GPUColorWriteBits = {
+    NONE: 0x0,
+    RED: 0x1,
+    GREEN: 0x2,
+    BLUE: 0x4,
+    ALPHA: 0x8,
+    ALL: 0xF
+  }
+  

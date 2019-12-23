@@ -1,4 +1,3 @@
-import { extensions, limits } from './constants'
 import { GPUSamplerDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
 import { GPUBuffer, GPUBufferDescriptor } from './buffers'
 import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
@@ -12,6 +11,13 @@ import GPUQueue from './GPUQueue';
 import KQueue from './KQueue';
 import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
 import { GPUError, GPUErrorFilter, GPUValidationError } from './errors'
+
+export const extensions = {
+  anisotropicFiltering: false
+}
+export const limits = {
+  maxBindGroups: 8
+}
 
 export class GPUDevice {
   public extensions = extensions

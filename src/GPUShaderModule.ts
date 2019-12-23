@@ -3,6 +3,13 @@ import { CompiledModule } from "./spirv/compilation";
 
 const SPIRV_MAGIC_NUMBER = Number.parseInt('0x07230203')
 
+export const GPUShaderStage = {
+    NONE: 0,
+    VERTEX: 1,
+    FRAGMENT: 2,
+    COMPUTE: 4
+}  
+
 export default class {
     _spirvCode?: Uint32Array
     _compiled?: CompiledModule
