@@ -1,18 +1,17 @@
-import { GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
+import { GPUShaderStage, GPUColorWriteBits } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
-import GPUValidationError from './GPUValidationError'
 import { GPUDevice, GPUAdapter } from './device';
 import { GPURenderPassEncoder } from './GPURenderPassEncoder';
 import { GPUComputePassEncoder } from './GPUComputePassEncoder';
 import { GPUBufferUsage } from './buffers';
-
-async function requestAdapter (): Promise<GPUAdapter> {
-  return new GPUAdapter()
-}
+import { GPUTextureUsage } from './textures';
+import { GPUValidationError } from './errors';
 
 let gpu = {
-  requestAdapter,
-  GPUBufferUsage,
+  async requestAdapter (): Promise<GPUAdapter> {
+    return new GPUAdapter()
+  },
+
   monkeyPatch () {
     (window as any).GPUBufferUsage = GPUBufferUsage;
     // name has changed, but I leave it for near future
@@ -26,6 +25,7 @@ let gpu = {
     (window as any).GPURenderPassEncoder = GPURenderPassEncoder;
     (window as any).GPUComputePassEncoder  = GPUComputePassEncoder;
     (window.navigator as any).gpu = gpu;
+
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
       if (contextType == 'gpu' || contextType == 'gpupresent') {
@@ -34,6 +34,7 @@ let gpu = {
       }
       return originalGetContext.apply(this, [contextType, contextAttributes]);
     }
+
   }
 }
 

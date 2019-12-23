@@ -5,21 +5,6 @@ export const limits = {
   maxBindGroups: 8
 }
 
-export const GPUTextureUsage = {
-  NONE: 0,
-  TRANSFER_SRC: 1,
-  TRANSFER_DST: 2,
-  SAMPLED: 4,
-  STORAGE: 8,
-  OUTPUT_ATTACHMENT: 16
-}
-
-export const GPUTextureAspect = {
-  COLOR: 1,
-  DEPTH: 2,
-  STENCIL: 4
-}
-
 export const GPUShaderStage = {
   NONE: 0,
   VERTEX: 1,

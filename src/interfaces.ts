@@ -8,12 +8,6 @@ export interface GPUObjectDescriptorBase {
   label?: string
 }
 
-
-export interface dupa {
-  size: number,
-  usage: number
-}
-
 export interface GPUExtent3D {
   width?: number,
   height?: number,

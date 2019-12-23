@@ -9,16 +9,9 @@ import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipel
 import GPUCommandEncoder from './GPUCommandEncoder';
 import { GPUBindGroup, GPUBindGroupDescriptor, GPUBindGroupLayout, GPUBindGroupLayoutDescriptor } from './bindGroups';
 import GPUQueue from './GPUQueue';
-import GPUError from './GPUError';
 import KQueue from './KQueue';
 import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
-import GPUValidationError from './GPUValidationError'
-
-enum GPUErrorFilter {
-  NONE = 'none',
-  OUT_OF_MEMORY = 'out-of-memory',
-  VALIDATION = 'validation'
-};
+import { GPUError, GPUErrorFilter, GPUValidationError } from './errors'
 
 export class GPUDevice {
   public extensions = extensions
