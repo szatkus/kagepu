@@ -158,7 +158,7 @@ class StorageBufferMemory extends Memory {
         if (!buffer.buffer || buffer.offset! > 0) {
             dontKnow()
         }
-        return new Pointer(new Memory(buffer.buffer._data!), 0, type)
+        return new Pointer(buffer.buffer._useAsMemory(), 0, type)
     }
 }
 

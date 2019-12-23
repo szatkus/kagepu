@@ -8,10 +8,6 @@ export interface GPUObjectDescriptorBase {
   label?: string
 }
 
-export interface GPUBufferDescriptor {
-  size: number,
-  usage: number
-}
 
 export interface dupa {
   size: number,

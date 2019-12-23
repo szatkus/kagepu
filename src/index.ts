@@ -1,10 +1,11 @@
 import GPUAdapter from './GPUAdapter'
-import { GPUBufferUsage, GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
+import { GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
 import GPUValidationError from './GPUValidationError'
 import GPUDevice from './GPUDevice';
 import { GPURenderPassEncoder } from './GPURenderPassEncoder';
 import { GPUComputePassEncoder } from './GPUComputePassEncoder';
+import { GPUBufferUsage } from './buffers';
 
 async function requestAdapter (): Promise<GPUAdapter> {
   return new GPUAdapter()

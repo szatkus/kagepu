@@ -87,10 +87,10 @@ export default class KQueue implements GPUQueue {
         this._pipeline = pipeline
     }
     __command__setIndexBuffer(buffer: GPUBuffer, offset: number) {
-        this._indexBuffer = buffer._data!.slice(offset)
+        this._indexBuffer = buffer._getArrayBuffer().slice(offset)
     }
     __command__setVertexBuffer(slot: number, buffer: GPUBuffer, offset: number) {
-        this._vertexBuffers[slot] = buffer._data!.slice(offset)
+        this._vertexBuffers[slot] = buffer._getArrayBuffer().slice(offset)
     }
     __command__setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets?: Array<number>) {
         this._bindGroups[index] = bindGroup
@@ -133,10 +133,7 @@ export default class KQueue implements GPUQueue {
             ) {
             dontKnow()
         }
-        let view: Uint8Array | Uint32Array = new Uint8Array(source.buffer._data!)
-        if (destination.texture._getPixelSize() == 32) {
-            view = new Uint32Array(source.buffer._data!)
-        }
+        let view = source.buffer._getArray(destination.texture._getPixelSize())
         for (var x = 0; x < copySize.width!; x++) {
             for (var y = 0; y < copySize.height!; y++) {
                 for (var z = 0; z < copySize.depth!; z++) {
@@ -191,13 +188,7 @@ export default class KQueue implements GPUQueue {
         if (!copySize.width || !copySize.height || !copySize.depth) {
             dontKnow()
         }
-        let view: Uint8Array | Uint16Array | Uint32Array = new Uint8Array(destination.buffer._data!)
-        if (source.texture._getPixelSize() === 16) {
-            view = new Uint16Array(view.buffer)
-        }
-        if (source.texture._getPixelSize() === 32) {
-            view = new Uint32Array(view.buffer)
-        }
+        let view = destination.buffer._getArray(source.texture._getPixelSize())
         for (var x = 0; x < copySize.width!; x++) {
             for (var y = 0; y < copySize.height!; y++) {
                 for (var z = 0; z < copySize.depth!; z++) {

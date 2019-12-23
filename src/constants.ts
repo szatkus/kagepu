@@ -4,17 +4,6 @@ export const extensions = {
 export const limits = {
   maxBindGroups: 8
 }
-export const GPUBufferUsage = {
-  NONE: 0,
-  MAP_READ: 1,
-  MAP_WRITE: 2,
-  COPY_SRC: 4,
-  COPY_DST: 8,
-  INDEX: 16,
-  VERTEX: 32,
-  UNIFORM: 64,
-  STORAGE: 128
-}
 
 export const GPUTextureUsage = {
   NONE: 0,

@@ -30,6 +30,6 @@ describe('GPUBuffer', () => {
       size: 128,
       usage: kagegpu.GPUBufferUsage.COPY_DST
     })
-    expect(buffer._mapped).to.be.true
+    expect((buffer as any)._mapped).to.be.true
   })
 })

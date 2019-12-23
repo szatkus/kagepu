@@ -219,7 +219,7 @@ export class InputMemory extends Memory {
             if ('buffer' in binding.resource) {
                 let bufferBinding = <GPUBufferBinding> binding.resource
                 dontKnow()
-                return new Pointer(new Memory(bufferBinding.buffer._data!), bufferBinding.offset || 0, type)
+                return new Pointer(bufferBinding.buffer._useAsMemory(), bufferBinding.offset || 0, type)
             }
             if (binding.resource instanceof GPUTextureView) {
                 let buffer = binding.resource._getBuffer()

@@ -1,19 +1,35 @@
-import { GPUBufferDescriptor } from './interfaces'
-import { GPUBufferUsage } from './constants'
 import dontKnow from './dontKnow';
+import { Memory } from './spirv/memory';
 
 export type GPUBufferSize = number;
+
+export const GPUBufferUsage = {
+  NONE: 0,
+  MAP_READ: 1,
+  MAP_WRITE: 2,
+  COPY_SRC: 4,
+  COPY_DST: 8,
+  INDEX: 16,
+  VERTEX: 32,
+  UNIFORM: 64,
+  STORAGE: 128
+}
+
+export interface GPUBufferDescriptor {
+  size: number,
+  usage: number
+}
 
 let worker = new Worker('data:application/javascript,')
 
 export class GPUBuffer {
-  _data: ArrayBuffer | undefined
-  _error: Error | undefined
-  _usage: number
-  _mapped = false
-  _destroyed = false
-  _toDetach: Array<ArrayBuffer> = []
-  constructor (descriptor: GPUBufferDescriptor) {
+  private _data: ArrayBuffer | undefined
+  private _error: Error | undefined
+  private _usage: number
+  private _destroyed = false
+  private _toDetach: Array<ArrayBuffer> = []
+  private _locked = false
+  constructor (descriptor: GPUBufferDescriptor, private _mapped = false) {
     try {
       this._data = new ArrayBuffer(descriptor.size)
     } catch (e) {
@@ -21,7 +37,10 @@ export class GPUBuffer {
     }
     this._usage = descriptor.usage
   }
-  // deprecated
+
+  /*
+   * deprecated
+   */
   setSubData (offset: number, data: ArrayBuffer, srcOffset: number = 0, length: number = 0) {
     if (this._error) {
       throw this._error
@@ -54,6 +73,7 @@ export class GPUBuffer {
       output[offset + i] = input[i]
     }
   }
+
   _mapRead (): ArrayBuffer {
     if (this._error) {
       throw this._error
@@ -63,9 +83,11 @@ export class GPUBuffer {
     this._toDetach.push(dataCopy)
     return <ArrayBuffer> Object.freeze(dataCopy)
   }
+  
   async mapReadAsync (): Promise<ArrayBuffer> {
     return this._mapRead()
   }
+
   _mapWrite(): ArrayBuffer {
     if (this._error) {
       throw this._error
@@ -73,9 +95,53 @@ export class GPUBuffer {
     this._mapped = true
     return this._data!
   }
+
   async mapWriteAsync(): Promise<ArrayBuffer> {
-    return this._mapWrite()
+    if (!this._locked) {
+      return this._mapWrite()
+    } else {
+      return new Promise<ArrayBuffer>((resolve => {
+        let timeoutId = setInterval(() => {
+          if (!this._locked) {
+            clearTimeout(timeoutId)
+            resolve(this._mapWrite())
+          }
+        }, 100)
+      }))
+    }
   }
+
+  _lock() {
+    this._locked = true
+  }
+
+  _useAsMemory(): Memory {
+    if (this._error) {
+      throw this._error
+    }
+    return new Memory(this._data!)
+  }
+
+  _getArray(width: number): Uint8Array | Uint16Array | Uint32Array {
+    if (this._error) {
+      throw this._error
+    }
+    if (width === 8) {
+      return new Uint8Array(this._data!)
+    }
+    if (width === 16) {
+      return new Uint16Array(this._data!)
+    }
+    return new Uint32Array(this._data!)
+  }
+
+  _getArrayBuffer(): ArrayBuffer {
+    if (this._error) {
+      throw this._error
+    }
+    return this._data!
+  }
+
   unmap () {
     let oldData = this._data!
     this._data = oldData.slice(0)
@@ -84,6 +150,7 @@ export class GPUBuffer {
     worker.postMessage('detach', this._toDetach)
     this._toDetach = []
   }
+
   destroy () {
     this._destroyed = false
     this._toDetach.push(this._data!)

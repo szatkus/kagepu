@@ -1,7 +1,7 @@
 import GPUAdapter from './GPUAdapter'
 import { extensions, limits } from './constants'
-import { GPUBufferDescriptor, GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
-import { GPUBuffer } from './buffers'
+import { GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
+import { GPUBuffer, GPUBufferDescriptor } from './buffers'
 import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
 import { GPUSampler } from './samplers'
 import GPUBindGroupLayout from './GPUBindGroupLayout';
@@ -36,8 +36,7 @@ export default class {
     return new GPUBuffer(descriptor)
   }
   createBufferMapped (descriptor: GPUBufferDescriptor): [GPUBuffer, ArrayBuffer] {
-    let buffer = new GPUBuffer(descriptor)
-    buffer._mapped = true
+    let buffer = new GPUBuffer(descriptor, true)
     return [buffer, buffer._mapWrite()]
   }
   /*
