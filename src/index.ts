@@ -1,4 +1,4 @@
-import GPUCanvasContext from './GPUCanvasContext';
+import { GPUCanvasContext } from './canvas';
 import { GPUDevice, GPUAdapter } from './device';
 import { GPURenderPassEncoder } from './GPURenderPassEncoder';
 import { GPUComputePassEncoder } from './GPUComputePassEncoder';
