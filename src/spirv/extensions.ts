@@ -3,6 +3,7 @@ import { Execution } from "./execution";
 import dontKnow from "../dontKnow";
 import { TypeVector, TypeFloat } from "./types";
 import { Pointer, Memory } from "./memory";
+import { ImiPut, ImiString } from "./imi";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -14,7 +15,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 module.flow.push((execution: Execution) => {
                     execution.put(resultId, name)
                 })
-                console.debug(`OpExtInstImport ${name}`)
+                module.ops.push(new ImiString(name))
+                module.ops.push(new ImiPut(resultId))
+                console.debug(`$${resultId} = OpExtInstImport ${name}`)
                 state.processed = true
             }
         break

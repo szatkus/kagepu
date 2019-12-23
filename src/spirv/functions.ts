@@ -2,6 +2,7 @@ import { CompilationState, CompiledModule } from "./compilation";
 import { Execution } from "./execution";
 import { Type } from "./types";
 import dontKnow from "../dontKnow";
+import { ImiFunction, ImiFunctionEnd, ImiPut } from "./imi";
 
 export interface FunctionDeclaration {
     functionType: Type
@@ -33,6 +34,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     })
                     execution.inFunction = resultId
                 })
+                module.ops.push(new ImiFunction( returnTypeId, functionTypeId, functionControl))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpFunction $${functionTypeId} $${returnTypeId} ${functionControl}`)
                 state.processed = true
             }
@@ -56,6 +59,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
             {
                 console.debug(`FunctionEnd`)
                 module.flow.push(new FunctionEnd())
+                module.ops.push(new ImiFunctionEnd())
                 state.processed = true
             }
         break

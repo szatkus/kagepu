@@ -1,5 +1,6 @@
 import { CompilationState, CompiledModule } from "./compilation";
 import dontKnow from "../dontKnow";
+import { ImiEntryPoint } from "./imi";
 
 const CAPABILITY_SHADER = 1
 
@@ -19,6 +20,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
             let name = state.consumeString()
             let interfaces = state.consumeArray()
             console.debug(`OpEntryPoint ${executionModel} $${entryPoint} ${name} ${interfaces}`)
+            module.ops.push(new ImiEntryPoint(executionModel, entryPoint, name))
             state.processed = true
             module.entryPoints.set(name, entryPoint)
         break

@@ -1,6 +1,7 @@
 import dontKnow from "../dontKnow"
 import { CompilationState, CompiledModule } from "./compilation";
 import { Execution } from "./execution";
+import { ImiPut, ImiType, ImiNumber, ImiBoolean, ImiGet, ImiGroup } from "./imi";
 
 export class Type {
     getSize(): number {
@@ -185,6 +186,8 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 module.flow.push((execution: Execution) => {
                     execution.put(resultId, new TypeVoid)
                 })
+                module.ops.push(new ImiType(TypeVoid))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpTypeVoid`)
                 state.processed = true
             }
@@ -198,6 +201,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                 module.flow.push((execution: Execution) => {
                     execution.put(resultId, new TypeInt(width, signed))
                 })
+                module.ops.push(new ImiNumber(width))
+                module.ops.push(new ImiBoolean(signed))
+                module.ops.push(new ImiType(TypeInt))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpTypeInt ${width}  ${signed}`)
                 state.processed = true
             }
@@ -318,6 +325,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let types = typeIds.map(t => execution.get(t))
                     execution.put(resultId, new TypeStruct(types))
                 })
+                typeIds.forEach(t => module.ops.push(new ImiGet(t)))
+                module.ops.push(new ImiGroup(typeIds.length))
+                module.ops.push(new ImiType(TypeStruct))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpTypeStruct ${typeIds}`)
                 state.processed = true
             }
@@ -332,6 +343,10 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let type = <Type> execution.get(typeId)
                     execution.put(resultId, new TypePointer(storageClass, type))
                 })
+                module.ops.push(new ImiNumber(storageClass))
+                module.ops.push(new ImiGet(typeId))
+                module.ops.push(new ImiType(TypePointer))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpTypePointer ${storageClass} $${typeId}`)
                 state.processed = true
             }
@@ -346,6 +361,11 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let type = <Type> execution.get(typeId)
                     execution.put(resultId, new TypeFunction(type, argumentsIds.map(id => <Type> execution.get(id))))
                 })
+                module.ops.push(new ImiGet(typeId))
+                argumentsIds.forEach(a => module.ops.push(new ImiGet(a)))
+                module.ops.push(new ImiGroup(argumentsIds.length))
+                module.ops.push(new ImiType(TypeFunction))
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpTypeFunction $${typeId}`)
                 state.processed = true
             }

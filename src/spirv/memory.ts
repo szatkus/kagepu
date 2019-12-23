@@ -7,6 +7,7 @@ import { Decorations, Location, DescriptorSet, Binding, Builtin } from "./annota
 import { GPUBufferBinding } from "../bindGroups"
 import { GPUTextureView } from "../textures"
 import { GPUSampler } from "../samplers"
+import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from "./imi"
 
 export class Pointer {
     constructor(public memory: Memory, public address: number, public type: Type, private object: any = {}) {
@@ -287,10 +288,17 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
                     if (initializerId !== 0) {
                         let initializer = execution.get(initializerId)
-                        debugger
+                        dontKnow()
                     }
                     execution.put(resultId, pointer)
                 })
+                module.ops.push(new ImiGet(typeId))
+                module.ops.push(new ImiPointerType())
+                module.ops.push(new ImiCreateVariable(storageClass, resultId))
+                if (initializerId !== 0) {
+                    dontKnow()
+                }
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpVariable $${typeId} ${storageClass}`)
                 state.processed = true
             }
@@ -306,7 +314,11 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let type = <Type> execution.get(typeId)
                     execution.put(resultId, execution.get(loadId))
                 })
-                console.debug(`$${resultId} = OpLoad ${typeId} $${loadId}`)
+                module.ops.push(new ImiGet(typeId))
+                module.ops.push(new ImiGet(loadId))
+                module.ops.push(new ImiLoad())
+                module.ops.push(new ImiPut(resultId))
+                console.debug(`$${resultId} = OpLoad $${typeId} $${loadId}`)
                 state.processed = true
             }
         break
@@ -322,6 +334,9 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     let data = getData(object, execution)
                     pointer.write(data)
                 })
+                module.ops.push(new ImiGet(pointerId))
+                module.ops.push(new ImiGet(objectId))
+                module.ops.push(new ImiStore())
                 console.debug(`OpStore $${pointerId} $${objectId}`)
                 state.processed = true
             }
@@ -342,7 +357,13 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     })
                     execution.put(resultId, base)
                 })
-                
+                module.ops.push(new ImiGet(typeId))
+                module.ops.push(new ImiGet(baseId))
+                indexes.forEach(i => {
+                    module.ops.push(new ImiGet(i))
+                    module.ops.push(new ImiGetIndex())
+                })
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpAccessChain $${typeId} $${baseId} ${indexes}`)
                 state.processed = true
             }

@@ -7,6 +7,7 @@ import { FunctionDeclaration, FunctionEnd } from "./functions"
 import { Decorations, Binding, DescriptorSet } from "./annotations"
 import { GPUBufferBinding, GPUBindGroup, GPUBindGroupBinding } from "../bindGroups"
 import { Type } from "./types"
+import { imiToWasm } from "./imi"
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -161,7 +162,7 @@ class StorageBufferMemory extends Memory {
     }
 }
 
-export function executeShader(vertexStage: GPUProgrammableStageDescriptor, inputBuffer: VertexInputs) {
+export function executeShader(vertexStage: GPUProgrammableStageDescriptor, inputs: VertexInputs) {
     if (!vertexStage.module._spirvCode) {
         dontKnow()
     }
@@ -171,8 +172,8 @@ export function executeShader(vertexStage: GPUProgrammableStageDescriptor, input
         compiled = compile(code)
         vertexStage.module._compiled = compiled
     }
-    let inputMemory = new InputMemory(inputBuffer, compiled.decorations)
-    let storageBuffer = new StorageBufferMemory(inputBuffer, compiled.decorations)
+    let inputMemory = new InputMemory(inputs, compiled.decorations)
+    let storageBuffer = new StorageBufferMemory(inputs, compiled.decorations)
     let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
     Execution.start(inputMemory, outputMemory, storageBuffer, compiled, vertexStage.entryPoint)
     return outputMemory.float32View

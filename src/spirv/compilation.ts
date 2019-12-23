@@ -13,6 +13,7 @@ import { compile as vectorsCompile } from "./vectors"
 import { compile as additionCompile } from "./addition"
 import compiler from "./compiler"
 import './images/'
+import { ImiOp } from "./imi"
 
 export type CodeStream = Uint32Array
 
@@ -21,6 +22,7 @@ export class CompiledModule {
     decorations = new Decorations()
     flow: (Function | FunctionEnd)[] = []
     entryPoints: Map<String, number> = new Map()
+    ops: ImiOp[] = []
 }
 
 export class CompilationState {
@@ -32,7 +34,7 @@ export class CompilationState {
     processed: boolean = false
     constructor(readonly code: CodeStream, public module: CompiledModule) {}
 
-    consumeString(): String {
+    consumeString(): string {
         let start = this.pos
         let end = start
         while ((this.code[this.pos] & 0xFF) != 0 && this.pos < this.endPos - 1) {

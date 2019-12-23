@@ -1,11 +1,13 @@
 import { CompilationState, CompiledModule } from "./compilation";
 import { Execution } from "./execution";
+import { ImiReturn } from "./imi";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
         // OpReturn
         case 253:
             console.debug('OpReturn')
+            module.ops.push(new ImiReturn())
             state.processed = true
         break;
         // OpReturnValue

@@ -3,6 +3,7 @@ import { Execution } from "./execution";
 import { Type } from "./types";
 import dontKnow from "../dontKnow";
 import { ConstantComposite } from "./memory";
+import { ImiNumber, ImiGet, ImiCreateVariable, ImiPut, ImiPointerWrite } from "./imi";
 
 export function compile (state: CompilationState, module: CompiledModule) {
     switch(state.opCode) {
@@ -19,6 +20,11 @@ export function compile (state: CompilationState, module: CompiledModule) {
                     pointer.writeUint32(value)
                     execution.put(resultId, pointer)
                 })
+                module.ops.push(new ImiGet(typeId))
+                module.ops.push(new ImiCreateVariable(0, resultId))
+                module.ops.push(new ImiNumber(value))
+                module.ops.push(new ImiPointerWrite())
+                module.ops.push(new ImiPut(resultId))
                 console.debug(`$${resultId} = OpConstant $${typeId} ${value}`)
                 state.processed = true
             }
