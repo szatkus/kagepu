@@ -1,8 +1,7 @@
-import GPUAdapter from './GPUAdapter'
 import { GPUShaderStage, GPUColorWriteBits, GPUTextureUsage } from './constants'
 import GPUCanvasContext from './GPUCanvasContext';
 import GPUValidationError from './GPUValidationError'
-import GPUDevice from './GPUDevice';
+import { GPUDevice, GPUAdapter } from './device';
 import { GPURenderPassEncoder } from './GPURenderPassEncoder';
 import { GPUComputePassEncoder } from './GPUComputePassEncoder';
 import { GPUBufferUsage } from './buffers';

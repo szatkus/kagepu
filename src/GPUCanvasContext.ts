@@ -1,4 +1,4 @@
-import GPUDevice from "./GPUDevice";
+import { GPUDevice } from "./device";
 import { GPUObjectDescriptorBase } from "./interfaces";
 import { GPUTexture, GPUTextureView, GPUTextureViewDescriptor } from "./textures";
 import dontKnow from "./dontKnow";
