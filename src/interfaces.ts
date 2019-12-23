@@ -1,8 +1,8 @@
 import GPUPipelineLayout from './GPUPipelineLayout';
 import GPUShaderModule from './GPUShaderModule';
 import { GPUBufferSize, GPUBuffer } from './buffers';
-import GPUBindGroupLayout from './GPUBindGroupLayout';
 import { GPUTexture } from './textures';
+import { GPUBindGroupLayout } from './bindGroups';
 
 export interface GPUObjectDescriptorBase {
   label?: string
@@ -32,16 +32,6 @@ export interface GPUSamplerDescriptor {
   maxAnisotropy: number,
   compareFunction: string,
   borderColor: string
-}
-
-export interface GPUBindGroupLayoutBinding {
-  binding: number,
-  visibility: number,
-  type: string
-}
-
-export interface GPUBindGroupLayoutDescriptor {
-  bindings: Array<GPUBindGroupLayoutBinding>
 }
 
 export type GPUShaderCode = Uint32Array|string

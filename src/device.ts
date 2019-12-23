@@ -1,14 +1,13 @@
 import { extensions, limits } from './constants'
-import { GPUSamplerDescriptor, GPUBindGroupLayoutDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
+import { GPUSamplerDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
 import { GPUBuffer, GPUBufferDescriptor } from './buffers'
 import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
 import { GPUSampler } from './samplers'
-import GPUBindGroupLayout from './GPUBindGroupLayout';
 import GPUShaderModule from './GPUShaderModule';
 import GPUPipelineLayout from './GPUPipelineLayout';
 import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipeline';
 import GPUCommandEncoder from './GPUCommandEncoder';
-import { GPUBindGroup, GPUBindGroupDescriptor } from './bindGroups';
+import { GPUBindGroup, GPUBindGroupDescriptor, GPUBindGroupLayout, GPUBindGroupLayoutDescriptor } from './bindGroups';
 import GPUQueue from './GPUQueue';
 import GPUError from './GPUError';
 import KQueue from './KQueue';
