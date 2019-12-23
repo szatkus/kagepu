@@ -1,8 +1,8 @@
-import GPUPipelineLayout from './GPUPipelineLayout';
-import GPUShaderModule from './GPUShaderModule';
-import { GPUBufferSize, GPUBuffer } from './buffers';
-import { GPUTexture } from './textures';
-import { GPUBindGroupLayout } from './bindGroups';
+import GPUPipelineLayout from './GPUPipelineLayout'
+import GPUShaderModule from './GPUShaderModule'
+import { GPUBufferSize, GPUBuffer } from './buffers'
+import { GPUTexture } from './textures'
+import { GPUBindGroupLayout } from './bindGroups'
 
 export interface GPUObjectDescriptorBase {
   label?: string
@@ -28,7 +28,7 @@ export interface GPUSamplerDescriptor {
   borderColor: string
 }
 
-export type GPUShaderCode = Uint32Array|string
+export type GPUShaderCode = Uint32Array | string
 
 export interface GPUShaderModuleDescriptor {
   code: GPUShaderCode
@@ -39,7 +39,7 @@ export interface GPUPipelineLayoutDescriptor {
 }
 
 export interface GPUPipelineDescriptorBase {
-  layout: GPUPipelineLayout 
+  layout: GPUPipelineLayout
 }
 
 export interface GPUPipelineStageDescriptor {
@@ -63,8 +63,8 @@ export interface GPUColorStateDescriptor {
 }
 
 export enum GPUInputStepMode {
-  vertex = "vertex",
-  instance = "instance"
+  vertex = 'vertex',
+  instance = 'instance'
 }
 
 export enum GPUVertexFormat {
@@ -89,7 +89,7 @@ export enum GPUVertexFormat {
   // "float",
   // "float2",
   // "float3",
-  FLOAT4 = 'float4',
+  FLOAT4 = 'float4'
   // "uint",
   // "uint2",
   // "uint3",
@@ -110,7 +110,7 @@ export interface GPUVertexBufferDescriptor {
   stride: number,
   stepMode: GPUInputStepMode,
   attributeSet: GPUVertexAttributeDescriptor[]
-};
+}
 
 export interface GPUVertexBufferDescriptor {
 
@@ -121,8 +121,8 @@ export interface GPUVertexInputDescriptor {
 }
 
 export enum GPUIndexFormat {
-  uint16 = "uint16",
-  uint32 = "uint32"
+  uint16 = 'uint16',
+  uint32 = 'uint32'
 }
 
 export interface GPUVertexBufferLayoutDescriptor {
@@ -146,11 +146,11 @@ export interface GPUProgrammableStageDescriptor {
 }
 
 export interface GPUBufferCopyView {
-  buffer: GPUBuffer, 
+  buffer: GPUBuffer,
   offset?: GPUBufferSize,
   rowPitch: number,
   imageHeight: number,
-};
+}
 
 export interface GPUOrigin3D {
   x?: number,
@@ -162,6 +162,5 @@ export interface GPUTextureCopyView {
   texture: GPUTexture,
   mipLevel?: number,
   arrayLayer?: number,
-  origin?: GPUOrigin3D;
+  origin?: GPUOrigin3D
 }
-

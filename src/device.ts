@@ -2,13 +2,13 @@ import { GPUSamplerDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescr
 import { GPUBuffer, GPUBufferDescriptor } from './buffers'
 import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
 import { GPUSampler } from './samplers'
-import GPUShaderModule from './GPUShaderModule';
-import GPUPipelineLayout from './GPUPipelineLayout';
-import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipeline';
-import GPUCommandEncoder from './GPUCommandEncoder';
-import { GPUBindGroup, GPUBindGroupDescriptor, GPUBindGroupLayout, GPUBindGroupLayoutDescriptor } from './bindGroups';
-import GPUQueue from './GPUQueue';
-import KQueue from './KQueue';
+import GPUShaderModule from './GPUShaderModule'
+import GPUPipelineLayout from './GPUPipelineLayout'
+import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipeline'
+import GPUCommandEncoder from './GPUCommandEncoder'
+import { GPUBindGroup, GPUBindGroupDescriptor, GPUBindGroupLayout, GPUBindGroupLayoutDescriptor } from './bindGroups'
+import GPUQueue from './GPUQueue'
+import KQueue from './KQueue'
 import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
 import { GPUError, GPUErrorFilter, GPUValidationError } from './errors'
 
@@ -55,27 +55,27 @@ export class GPUDevice {
     return new GPUSampler()
   }
 
-  createBindGroupLayout(descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
+  createBindGroupLayout (descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
     return new GPUBindGroupLayout(descriptor)
   }
 
-  createPipelineLayout(descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
+  createPipelineLayout (descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
     return new GPUPipelineLayout(descriptor)
   }
 
-  createShaderModule(descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
+  createShaderModule (descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
     return new GPUShaderModule(descriptor.code)
   }
 
-  createRenderPipeline(descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
+  createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     return new GPURenderPipeline(descriptor)
   }
 
-  createComputePipeline(descriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
+  createComputePipeline (descriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
     return new GPUComputePipeline(descriptor)
   }
 
-  createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
+  createBindGroup (descriptor: GPUBindGroupDescriptor): GPUBindGroup {
     if (this._validation()) {
       if (descriptor.layout._getBindingsCount() !== descriptor.bindings.length) {
         this._error = new GPUValidationError('Bindings count mismatch.')
@@ -84,15 +84,15 @@ export class GPUDevice {
     return new GPUBindGroup(descriptor)
   }
 
-  createCommandEncoder(descriptor?: any): GPUCommandEncoder {
+  createCommandEncoder (descriptor?: any): GPUCommandEncoder {
     return new GPUCommandEncoder()
   }
 
-  pushErrorScope(filter: GPUErrorFilter) {
+  pushErrorScope (filter: GPUErrorFilter) {
     this._filters = filter
   }
 
-  async popErrorScope(): Promise<GPUError | null> {
+  async popErrorScope (): Promise<GPUError | null> {
     let error = this._error
     delete this._error
     return error || null
@@ -101,11 +101,11 @@ export class GPUDevice {
   /*
    * @deprecated
    */
-  getQueue(): GPUQueue {
+  getQueue (): GPUQueue {
     return this.defaultQueue
   }
 
-  _validation(): boolean {
+  _validation (): boolean {
     return this._filters === GPUErrorFilter.VALIDATION
   }
 }
@@ -114,7 +114,7 @@ export class GPUAdapter {
   name = 'kagegpu'
   extensions = extensions
 
-  async requestDevice () : Promise<GPUDevice> {
+  async requestDevice (): Promise<GPUDevice> {
     return new GPUDevice(this)
   }
 }

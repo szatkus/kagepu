@@ -1,7 +1,7 @@
-import dontKnow from './dontKnow';
-import { Memory } from './spirv/memory';
+import dontKnow from './dontKnow'
+import { Memory } from './spirv/memory'
 
-export type GPUBufferSize = number;
+export type GPUBufferSize = number
 
 export const GPUBufferUsage = {
   NONE: 0,
@@ -51,7 +51,7 @@ export class GPUBuffer {
     if (length === 0) {
       length = this._data!.byteLength
     }
-    if (srcOffset !== 0 || length != this._data!.byteLength) {
+    if (srcOffset !== 0 || length !== this._data!.byteLength) {
       dontKnow()
     }
     if (!(this._usage & GPUBufferUsage.COPY_DST)) {
@@ -81,14 +81,14 @@ export class GPUBuffer {
     this._mapped = true
     let dataCopy = this._data!.slice(0)
     this._toDetach.push(dataCopy)
-    return <ArrayBuffer> Object.freeze(dataCopy)
+    return Object.freeze(dataCopy) as ArrayBuffer
   }
-  
+
   async mapReadAsync (): Promise<ArrayBuffer> {
     return this._mapRead()
   }
 
-  _mapWrite(): ArrayBuffer {
+  _mapWrite (): ArrayBuffer {
     if (this._error) {
       throw this._error
     }
@@ -96,7 +96,7 @@ export class GPUBuffer {
     return this._data!
   }
 
-  async mapWriteAsync(): Promise<ArrayBuffer> {
+  async mapWriteAsync (): Promise<ArrayBuffer> {
     if (!this._locked) {
       return this._mapWrite()
     } else {
@@ -111,18 +111,18 @@ export class GPUBuffer {
     }
   }
 
-  _lock() {
+  _lock () {
     this._locked = true
   }
 
-  _useAsMemory(): Memory {
+  _useAsMemory (): Memory {
     if (this._error) {
       throw this._error
     }
     return new Memory(this._data!)
   }
 
-  _getArray(width: number): Uint8Array | Uint16Array | Uint32Array {
+  _getArray (width: number): Uint8Array | Uint16Array | Uint32Array {
     if (this._error) {
       throw this._error
     }
@@ -135,7 +135,7 @@ export class GPUBuffer {
     return new Uint32Array(this._data!)
   }
 
-  _getArrayBuffer(): ArrayBuffer {
+  _getArrayBuffer (): ArrayBuffer {
     if (this._error) {
       throw this._error
     }

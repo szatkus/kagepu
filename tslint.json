@@ -1,0 +1,10 @@
+{
+  "extends": ["tslint-config-standard"],
+  "rules": {
+    "radix": false,
+    "no-empty": false
+  },
+  "linterOptions": {
+      "exclude": ["test/*.ts"]
+  }
+}

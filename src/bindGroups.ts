@@ -1,10 +1,10 @@
-import { GPUSampler } from "./samplers";
-import { GPUBuffer } from "./buffers";
-import { GPUObjectDescriptorBase } from "./interfaces";
-import { GPUTextureView } from "./textures";
+import { GPUSampler } from './samplers'
+import { GPUBuffer } from './buffers'
+import { GPUObjectDescriptorBase } from './interfaces'
+import { GPUTextureView } from './textures'
 
 export class GPUBindGroup {
-  constructor(public descriptor: GPUBindGroupDescriptor) {
+  constructor (public descriptor: GPUBindGroupDescriptor) {
     this.descriptor = descriptor
   }
 }
@@ -15,13 +15,13 @@ export interface GPUBindGroupDescriptor extends GPUObjectDescriptorBase {
 }
 
 export class GPUBindGroupLayout {
-  constructor(private _descriptor: GPUBindGroupLayoutDescriptor) {
+  constructor (private _descriptor: GPUBindGroupLayoutDescriptor) {
   }
-  _getBindingsByType(type: String): number[] {
-      return this._descriptor.bindings.filter(binding => binding.type === type).map(binding => binding.binding)
+  _getBindingsByType (type: String): number[] {
+    return this._descriptor.bindings.filter(binding => binding.type === type).map(binding => binding.binding)
   }
-  _getBindingsCount(): number {
-      return this._descriptor.bindings.length
+  _getBindingsCount (): number {
+    return this._descriptor.bindings.length
   }
 }
 

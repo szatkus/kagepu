@@ -1,8 +1,8 @@
 import kagegpu from '../src/index'
 
-import { expect } from 'chai';
+import { expect } from 'chai'
 import 'mocha'
-import { GPUBufferUsage } from '../src/buffers';
+import { GPUBufferUsage } from '../src/buffers'
 
 describe('GPUBuffer', () => {
   it('test buffer operations', async () => {

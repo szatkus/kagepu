@@ -1,12 +1,12 @@
-import { GPUCanvasContext } from './canvas';
-import { GPUDevice, GPUAdapter } from './device';
-import { GPURenderPassEncoder } from './GPURenderPassEncoder';
-import { GPUComputePassEncoder } from './GPUComputePassEncoder';
-import { GPUBufferUsage } from './buffers';
-import { GPUTextureUsage } from './textures';
-import { GPUValidationError } from './errors';
-import { GPUColorWriteBits } from './colors';
-import { GPUShaderStage } from './GPUShaderModule';
+import { GPUCanvasContext } from './canvas'
+import { GPUDevice, GPUAdapter } from './device'
+import { GPURenderPassEncoder } from './GPURenderPassEncoder'
+import { GPUComputePassEncoder } from './GPUComputePassEncoder'
+import { GPUBufferUsage } from './buffers'
+import { GPUTextureUsage } from './textures'
+import { GPUValidationError } from './errors'
+import { GPUColorWriteBits } from './colors'
+import { GPUShaderStage } from './GPUShaderModule'
 
 let gpu = {
   async requestAdapter (): Promise<GPUAdapter> {
@@ -24,16 +24,16 @@ let gpu = {
     (window as any).GPUCanvasContext = GPUCanvasContext;
     (window as any).GPUDevice = GPUDevice;
     (window as any).GPURenderPassEncoder = GPURenderPassEncoder;
-    (window as any).GPUComputePassEncoder  = GPUComputePassEncoder;
-    (window.navigator as any).gpu = gpu;
+    (window as any).GPUComputePassEncoder = GPUComputePassEncoder;
+    (window.navigator as any).gpu = gpu
 
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
     (HTMLCanvasElement.prototype as any).getContext = function (contextType: string, contextAttributes: any): any {
-      if (contextType == 'gpu' || contextType == 'gpupresent') {
+      if (contextType === 'gpu' || contextType === 'gpupresent') {
         let context = originalGetContext.apply(this, ['2d']) as CanvasRenderingContext2D
         return new GPUCanvasContext(context)
       }
-      return originalGetContext.apply(this, [contextType, contextAttributes]);
+      return originalGetContext.apply(this, [contextType, contextAttributes])
     }
 
   }

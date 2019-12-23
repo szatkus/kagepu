@@ -1,11 +1,11 @@
-import { GPUPipelineDescriptorBase, GPUProgrammableStageDescriptor } from "./interfaces";
+import { GPUPipelineDescriptorBase, GPUProgrammableStageDescriptor } from './interfaces'
 
 export interface GPUComputePipelineDescriptor extends GPUPipelineDescriptorBase {
-    computeStage: GPUProgrammableStageDescriptor
+  computeStage: GPUProgrammableStageDescriptor
 }
 
 export class GPUComputePipeline {
-    constructor(public _descriptor: GPUComputePipelineDescriptor) {
-        
-    }
+  constructor (public _descriptor: GPUComputePipelineDescriptor) {
+
+  }
 }

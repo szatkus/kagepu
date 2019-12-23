@@ -1,7 +1,7 @@
-import { GPUPipelineLayoutDescriptor } from "./interfaces";
+import { GPUPipelineLayoutDescriptor } from './interfaces'
 
 export default class {
-    constructor(public _descriptor: GPUPipelineLayoutDescriptor) {
-        
-    }
+  constructor (public _descriptor: GPUPipelineLayoutDescriptor) {
+
+  }
 }
