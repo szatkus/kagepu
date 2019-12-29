@@ -132,8 +132,8 @@ export interface GPUVertexBufferLayoutDescriptor {
 }
 
 export interface GPUVertexStateDescriptor {
-  indexFormat: GPUIndexFormat,
-  vertexBuffers: Array<GPUVertexBufferLayoutDescriptor>
+  indexFormat?: GPUIndexFormat,
+  vertexBuffers?: Array<GPUVertexBufferLayoutDescriptor>
 }
 
 export interface GPUComputePassDescriptor extends GPUObjectDescriptorBase {

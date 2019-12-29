@@ -228,7 +228,7 @@ export default class KQueue implements GPUQueue {
       for (let j = 0; j < this._vertexBuffers.length; j++) {
         let offset = offsets[j] || 0
         let vertexBufferView = new Uint8Array(this._vertexBuffers[j])
-        let vertexBufferInput = pipeline._descriptor.vertexState.vertexBuffers[0]
+        let vertexBufferInput = pipeline._descriptor.vertexState.vertexBuffers![0]
         if (vertexBufferInput.stepMode && vertexBufferInput.stepMode !== 'vertex') {
           dontKnow()
         }
@@ -291,8 +291,9 @@ export default class KQueue implements GPUQueue {
         locations: [],
         builtins
       }
-      for (let j = 0; j < vertexState.vertexBuffers.length; j++) {
-        let descriptor = vertexState.vertexBuffers[j]
+      let vertexBuffers = vertexState.vertexBuffers || []
+      for (let j = 0; j < vertexBuffers.length; j++) {
+        let descriptor = vertexBuffers[j]
         let indexBuffer = new Uint16Array(this._indexBuffer)
         let vertexBuffer = new Uint8Array(this._vertexBuffers[j])
         if (descriptor.stepMode !== GPUInputStepMode.vertex || vertexState.indexFormat !== GPUIndexFormat.uint16 || descriptor.attributes.length > 1 || descriptor.attributes[0].offset !== 0) {

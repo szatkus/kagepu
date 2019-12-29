@@ -68,6 +68,29 @@ export class GPUDevice {
   }
 
   createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
+    if (this._validation()) {
+      if ((descriptor.vertexState.vertexBuffers?.length ?? 0) > 16) {
+        this._error = new GPUValidationError('Too many vertex buffers.')
+      }
+      if ((descriptor.vertexState.vertexBuffers ?? []).map(v => v.attributes.length).reduce((a, b) => a + b, 0) > 16) {
+        this._error = new GPUValidationError('Too many attributes.')
+      }
+      let locations = new Set()
+      for (let vertexBuffer of descriptor.vertexState.vertexBuffers || []) {
+        if ((vertexBuffer.arrayStride ?? 0) > 2048) {
+          this._error = new GPUValidationError('Too large array stride.')
+        }
+        for (let attribute of vertexBuffer.attributes) {
+          if ((vertexBuffer.arrayStride ?? 0) > 0 && attribute.offset >= vertexBuffer.arrayStride) {
+            this._error = new GPUValidationError('Attribute offset cannot exceed vertex buffer array stride.')
+          }
+          if (locations.has(attribute.shaderLocation)) {
+            this._error = new GPUValidationError('Multiple attributes in one location.')
+          }
+          locations.add(attribute.shaderLocation)
+        }
+      }
+    }
     return new GPURenderPipeline(descriptor)
   }
 
