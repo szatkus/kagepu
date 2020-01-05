@@ -5,7 +5,7 @@ import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from './GPURe
 import { GPUBindGroup } from './bindGroups'
 import { GPUBuffer, GPUBufferSize } from './buffers'
 import dontKnow from './dontKnow'
-import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D, GPUVertexFormat } from './interfaces'
+import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D, GPUVertexFormat, GPUOrigin3D } from './interfaces'
 import { executeShader } from './spirv/execution'
 import { GPUComputePipeline } from './GPUComputePipeline'
 import { GPUFenceDescriptor, GPUFence } from './GPUFence'
@@ -20,6 +20,18 @@ export interface VertexInputs {
     length: number
   }[],
   builtins: number[]
+}
+
+interface GPUOrigin2DDict {
+  x: number,
+  y: number
+}
+
+type GPUOrigin2D = number[] | GPUOrigin2DDict 
+
+interface GPUImageBitmapCopyView {
+  imageBitmap: ImageBitmap,
+  origin?: GPUOrigin2D
 }
 
 export default class KQueue implements GPUQueue {
@@ -42,6 +54,30 @@ export default class KQueue implements GPUQueue {
       }
     }
         // console.profileEnd()
+  }
+  copyImageBitmapToTexture(source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
+    let origin: GPUOrigin2DDict = <GPUOrigin2DDict> source.origin ?? {x: 0, y: 0}
+    let context = document.createElement('canvas').getContext('2d')
+    context!.canvas.width = source.imageBitmap.width
+    context!.canvas.height = source.imageBitmap.height
+    context!.drawImage(source.imageBitmap, origin.x, origin.y)
+    let imageData = context!.getImageData(0, 0, source.imageBitmap.width, source.imageBitmap.height)
+    let destinationOrigin = destination.origin ?? {x: 0, y: 0, z: 0}
+    for (let x = 0; x < copySize.width!; x++) {
+      for (let y = 0; y < copySize.height!; y++) {
+        for (let z = 0; z < copySize.depth!; z++) {
+          let offset = (y * imageData.width + x) * 4
+          let pixel = imageData.data[offset] + imageData.data[offset + 1] * 0x100 + imageData.data[offset + 2] * 0x10000 + imageData.data[offset + 3] * 0x1000000
+          destination.texture._putPixel(pixel,
+            x + (destinationOrigin.x ?? 0),
+            y + (destinationOrigin.y ?? 0),
+            z + (destinationOrigin.z ?? 0),
+            destination.arrayLayer ?? 0,
+            destination.mipLevel ?? 0
+          )
+        }
+      }
+    }
   }
   async _runRenderPass (pass: GPURenderPassEncoder) {
     return new Promise((resolve, reject) => {
@@ -192,7 +228,9 @@ export default class KQueue implements GPUQueue {
     for (let x = 0; x < copySize.width!; x++) {
       for (let y = 0; y < copySize.height!; y++) {
         for (let z = 0; z < copySize.depth!; z++) {
-          view[x + y * destination.rowPitch + z * destination.imageHeight * destination.rowPitch] = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
+          let pixel = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
+          let offset = x + y * destination.rowPitch / view.BYTES_PER_ELEMENT + z * destination.imageHeight * destination.rowPitch / view.BYTES_PER_ELEMENT
+          view[offset] = pixel
         }
       }
     }
