@@ -68,7 +68,7 @@ export class GPUDevice {
   }
 
   createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
-    if (this._validation()) {
+    if (this._validation() && descriptor.vertexState) {
       if ((descriptor.vertexState.vertexBuffers?.length ?? 0) > 16) {
         this._error = new GPUValidationError('Too many vertex buffers.')
       }

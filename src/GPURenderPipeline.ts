@@ -4,11 +4,11 @@ export interface GPURenderPipelineDescriptor extends GPUPipelineDescriptorBase {
   vertexStage: GPUProgrammableStageDescriptor ,
   fragmentStage: GPUProgrammableStageDescriptor ,
   primitiveTopology: string,
-  rasterizationState: GPURasterizationStateDescriptor,
+  rasterizationState?: GPURasterizationStateDescriptor,
   colorStates: Array<GPUColorStateDescriptor>,
     // GPUDepthStencilStateDescriptor? depthStencilState;
     // GPUInputStateDescriptor inputState;
-  vertexState: GPUVertexStateDescriptor,
+  vertexState?: GPUVertexStateDescriptor,
   sampleCount: number,
   sampleMask: number,
   alphaToCoverageEnabled: boolean
