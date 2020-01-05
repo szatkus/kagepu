@@ -1,7 +1,7 @@
 import GPUQueue from './GPUQueue'
 import { KCommandBuffer } from './GPUCommandEncoder'
 import { GPURenderPipeline } from './GPURenderPipeline'
-import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor } from './GPURenderPassEncoder'
+import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor, GPUStoreOp } from './GPURenderPassEncoder'
 import { GPUBindGroup } from './bindGroups'
 import { GPUBuffer, GPUBufferSize } from './buffers'
 import dontKnow from './dontKnow'
@@ -283,35 +283,39 @@ export default class KQueue implements GPUQueue {
       vertexInput.builtins[42] = i
       verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, vertexInput)
     }
-    let output = passDescriptor.colorAttachments[0].attachment._texture
-    if (pipeline._descriptor.primitiveTopology !== 'triangle-list' || vertexCount % 3 !== 0) dontKnow()
-    let width = output._getWidth()
-    let height = output._getHeight()
-    let buffer = new Uint32Array(output._getBuffer(0, 0))
+    for (let colorAttachment of passDescriptor.colorAttachments) {
+      let output = colorAttachment.attachment._texture
+      let storeMode = colorAttachment.storeOp ?? GPUStoreOp.STORE
+      if (pipeline._descriptor.primitiveTopology !== 'triangle-list' || vertexCount % 3 !== 0) dontKnow()
+      let width = output._getWidth()
+      let height = output._getHeight()
 
-    for (let i = 0; i < vertexCount / 3; i++) {
-      for (let y = 0; y < output._getHeight(); y++) {
-        for (let x = 0; x < output._getWidth(); x++) {
+      for (let i = 0; i < vertexCount / 3; i++) {
+        for (let y = 0; y < output._getHeight(); y++) {
+          for (let x = 0; x < output._getWidth(); x++) {
 
-          let normalizedX = (x / width) * 2 - 1
-          let normalizedY = ((height - y) / height) * 2 - 1
-          const dir1 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
-          const dir2 = checkDirection(normalizedX, normalizedY, verticiesData[2].position[0], verticiesData[2].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
-          const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
-          if ((dir1 === -1 && dir2 === 1 && dir3 === -1) ||
-          (dir1 === 0 && dir2 === 0) ||
-          (dir1 === 0 && dir3 === 0) ||
-          (dir2 === 0 && dir2 === 0)) {
-            let inputBuffer = new ArrayBuffer(32)
-            let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, { buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: [] })
-                        // no idea what to do when a texture has more levels
-            buffer[x + y * width] = colorToNumber(pixelData.color)
+            let normalizedX = (x / width) * 2 - 1
+            let normalizedY = ((height - y) / height) * 2 - 1
+            const dir1 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
+            const dir2 = checkDirection(normalizedX, normalizedY, verticiesData[2].position[0], verticiesData[2].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
+            const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
+            if ((dir1 === -1 && dir2 === 1 && dir3 === -1) ||
+            (dir1 === 0 && dir2 === 0) ||
+            (dir1 === 0 && dir3 === 0) ||
+            (dir2 === 0 && dir2 === 0)) {
+              let inputBuffer = new ArrayBuffer(32)
+              let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, { buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: [] })
+                          // no idea what to do when a texture has more levels
+              if (storeMode === GPUStoreOp.STORE) {
+                output._putPixel(colorToNumber(pixelData.color), x, y, 0, 0, 0)
+              }
+            }
           }
         }
       }
-    }
 
-    output._flush()
+      output._flush()
+    }
   }
   __command__drawIndexed (indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
     let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as GPURenderPipeline
@@ -402,14 +406,14 @@ function copyBytes (output: Uint8Array, outputOffset: number, length: number, in
 const dataLength: Map<GPUVertexFormat, number> = new Map([[GPUVertexFormat.FLOAT4, 16]])
 
 function clear (texture: GPUTexture, color: GPUColor) {
-  if (texture._getPixelSize() !== 32) {
-    dontKnow()
-  }
   for (let arrayLayer = 0; arrayLayer < texture._getArrayLayerCount(); arrayLayer++) {
     for (let mipmapLevel = 0; mipmapLevel < texture._getMipmapLevelCount(); mipmapLevel++) {
-      let view = new Uint32Array(texture._getBuffer(arrayLayer, mipmapLevel))
-      for (let i = 0; i < view.length; i++) {
-        view[i] = colorToNumber(color)
+      for (let x = 0; x < texture._getWidth(); x++) {
+        for (let y = 0; y < texture._getHeight(); y++) {
+          for (let z = 0; z < texture._getDepth(); z++) {
+            texture._putPixel(colorToNumber(color), x, y, z, arrayLayer, mipmapLevel)
+          }
+        }
       }
     }
   }

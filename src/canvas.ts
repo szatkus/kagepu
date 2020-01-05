@@ -18,8 +18,13 @@ export class Context2DTexture implements GPUTexture {
   _getHeight (): number {
     return this._context.canvas.height
   }
+
   _getWidth (): number {
     return this._context.canvas.width
+  }
+
+  _getDepth (): number {
+    return 1
   }
 
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {

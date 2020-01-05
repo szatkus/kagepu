@@ -2,15 +2,17 @@ import { GPUExtent3D } from './interfaces'
 import dontKnow from './dontKnow'
 
 export interface GPUTexture {
+  
   createView (descriptor: GPUTextureViewDescriptor): GPUTextureView
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
   _getPixel (x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number
-  _getBuffer (arrayLayer: number, mipmap: number): ArrayBuffer
   _getArrayLayerCount (): number
   _getMipmapLevelCount (): number
   _getHeight (): number
   _getWidth (): number
+  _getDepth (): number
+  _getBuffer(arrayLevel: number, mipLevel: number): ArrayBuffer
   _flush (): void
 }
 
@@ -66,6 +68,10 @@ export class KTexture implements GPUTexture {
   }
   _getWidth (): number {
     return this._descriptor.size.width!
+  }
+
+  _getDepth (): number {
+    return this._descriptor.size.depth!
   }
 
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
@@ -134,6 +140,9 @@ export class KTexture implements GPUTexture {
     ]
     if (this._descriptor.format === 'rgba8unorm' || this._descriptor.format === 'rgba8uint') {
       return 32
+    }
+    if (this._descriptor.format === 'r8unorm') {
+      return 8
     }
     dontKnow()
     return 0

@@ -6,13 +6,13 @@ import { GPUObjectDescriptorBase } from './interfaces'
 import { GPUTextureView } from './textures'
 import { GPUColor } from './colors'
 
-enum GPULoadOp {
-    'clear',
-    'load'
+export enum GPULoadOp {
+  LOAD = 'load'
 }
 
-enum GPUStoreOp {
-    'store'
+export enum GPUStoreOp {
+  CLEAR = 'clear',
+  STORE = 'store'
 }
 
 interface GPURenderPassColorAttachmentDescriptor {
