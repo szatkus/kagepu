@@ -298,7 +298,10 @@ export default class KQueue implements GPUQueue {
           const dir1 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
           const dir2 = checkDirection(normalizedX, normalizedY, verticiesData[2].position[0], verticiesData[2].position[1], verticiesData[1].position[0], verticiesData[1].position[1])
           const dir3 = checkDirection(normalizedX, normalizedY, verticiesData[0].position[0], verticiesData[0].position[1], verticiesData[2].position[0], verticiesData[2].position[1])
-          if ((dir1 === -1 && dir2 === 1 && dir3 === -1)) {
+          if ((dir1 === -1 && dir2 === 1 && dir3 === -1) ||
+          (dir1 === 0 && dir2 === 0) ||
+          (dir1 === 0 && dir3 === 0) ||
+          (dir2 === 0 && dir2 === 0)) {
             let inputBuffer = new ArrayBuffer(32)
             let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, { buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: [] })
                         // no idea what to do when a texture has more levels
