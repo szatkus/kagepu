@@ -32,6 +32,8 @@ export default class GPUCommandEncoder {
 
   copyBufferToBuffer (source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
     this._checkState()
+    source._lock()
+    destination._lock()
     this._commands.push({
       name: 'copyBufferToBuffer',
       args: [source, sourceOffset, destination, destinationOffset, size]
@@ -40,6 +42,7 @@ export default class GPUCommandEncoder {
 
   copyBufferToTexture (source: GPUBufferCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     this._checkState()
+    source.buffer._lock()
     this._commands.push({
       name: 'copyBufferToTexture',
       args: [source, destination, copySize]
@@ -48,6 +51,7 @@ export default class GPUCommandEncoder {
 
   copyTextureToBuffer (source: GPUTextureCopyView, destination: GPUBufferCopyView, copySize: GPUExtent3D) {
     this._checkState()
+    destination.buffer._lock()
     this._commands.push({
       name: 'copyTextureToBuffer',
       args: [source, destination, copySize]

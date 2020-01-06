@@ -47,13 +47,7 @@ export default class KQueue implements GPUQueue {
     fence._value = signalValue
   }
   submit (buffers: KCommandBuffer[]) {
-        // console.profile()
-    for (let commandBuffer of buffers) {
-      for (let command of commandBuffer._commands) {
-        this._executeCommand(command)
-      }
-    }
-        // console.profileEnd()
+    setTimeout(() => this._executeBuffers(buffers), 1)
   }
   copyImageBitmapToTexture (source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     let origin: GPUOrigin2DDict = (source.origin as GPUOrigin2DDict) ?? { x: 0, y: 0 }
@@ -79,37 +73,26 @@ export default class KQueue implements GPUQueue {
       }
     }
   }
-  async _runRenderPass (pass: GPURenderPassEncoder) {
-    return new Promise((resolve, reject) => {
-            // we don't want to hung a browser
-      let commands = pass._commands
-      let i = 0
-      if (commands.length === 0) {
-        return resolve()
+  async _executeBuffers (buffers: KCommandBuffer[]) {
+    for (let commandBuffer of buffers) {
+      for (let command of commandBuffer._commands) {
+        await this._executeCommand(command)
       }
-      let run = () => {
-        try {
-          let command = commands[i]
-          this._executeCommand(command)
-          i++
-          if (i < commands.length) {
-            setTimeout(run, 1)
-          } else {
-            resolve()
-          }
-        } catch (e) {
-          reject(e)
-        }
-      }
-      setTimeout(run, 1)
-    })
-  }
-  _executeCommand (command: KCommand) {
-    let methodName = '__command__' + command.name
-    if (!(methodName in this)) {
-      console.error('Missing command ' + command.name)
     }
-    (this as any)[methodName].apply(this, command.args)
+  }
+  async _executeCommand (command: KCommand) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let methodName = '__command__' + command.name
+        if (!(methodName in this)) {
+          reject(new Error('Missing command ' + command.name))
+        } else {
+          (this as any)[methodName].apply(this, command.args)
+          resolve()
+        }
+      }, 1)
+    })
+
   }
   __command__setDescriptor (descriptor: GPURenderPassDescriptor | GPUComputePassDescriptor) {
     let defaultColor = { r: 0, b: 0, g: 0, a: 1 }
@@ -137,6 +120,8 @@ export default class KQueue implements GPUQueue {
     for (let i = 0; i < size; i++) {
       destinationView[destinationOffset + i] = sourceView[sourceOffset + i]
     }
+    source._unlock()
+    destination._unlock()
   }
   __command__copyBufferToTexture (source: GPUBufferCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     source = {
@@ -178,6 +163,7 @@ export default class KQueue implements GPUQueue {
         }
       }
     }
+    source.buffer._unlock()
   }
   __command__copyTextureToTexture (source: GPUTextureCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     let arrayLayer = source.arrayLayer || 0
@@ -234,6 +220,7 @@ export default class KQueue implements GPUQueue {
         }
       }
     }
+    destination.buffer._unlock()
   }
   __command__dispatch (x: number, y: number, z: number) {
     let pipeline = this._pipeline as GPUComputePipeline

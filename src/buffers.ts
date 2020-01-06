@@ -28,7 +28,8 @@ export class GPUBuffer {
   private _usage: number
   private _destroyed = false
   private _toDetach: Array<ArrayBuffer> = []
-  private _locked = false
+  private _locks = 0
+  private _monitors: Function[] = []
   constructor (descriptor: GPUBufferDescriptor, private _mapped = false) {
     try {
       this._data = new ArrayBuffer(descriptor.size)
@@ -85,7 +86,13 @@ export class GPUBuffer {
   }
 
   async mapReadAsync (): Promise<ArrayBuffer> {
-    return this._mapRead()
+    if (this._locks === 0) {
+      return this._mapRead()
+    } else {
+      return new Promise<ArrayBuffer>(resolve => {
+        this._monitors.push(() => resolve(this._mapRead()))
+      })
+    }
   }
 
   _mapWrite (): ArrayBuffer {
@@ -97,22 +104,28 @@ export class GPUBuffer {
   }
 
   async mapWriteAsync (): Promise<ArrayBuffer> {
-    if (!this._locked) {
+    if (this._locks === 0) {
       return this._mapWrite()
     } else {
-      return new Promise<ArrayBuffer>((resolve => {
-        let timeoutId = setInterval(() => {
-          if (!this._locked) {
-            clearTimeout(timeoutId)
-            resolve(this._mapWrite())
-          }
-        }, 100)
-      }))
+      return new Promise<ArrayBuffer>(resolve => {
+        this._monitors.push(() => resolve(this._mapWrite()))
+      })
     }
   }
 
   _lock () {
-    this._locked = true
+    this._locks++
+  }
+
+  _unlock () {
+    this._locks--
+    if (this._locks === 0) {
+      let monitor = this._monitors.pop()
+      while (monitor) {
+        monitor.apply(this)
+        monitor = this._monitors.pop()
+      }
+    }
   }
 
   _useAsMemory (): Memory {

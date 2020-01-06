@@ -68,6 +68,7 @@ export class GPURenderPassEncoder {
   }
   setIndexBuffer (buffer: GPUBuffer, offset: number = 0) {
     this._checkState()
+    buffer._lock()
     this._commands.push({
       name: 'setIndexBuffer',
       args: [buffer, offset]
@@ -75,6 +76,7 @@ export class GPURenderPassEncoder {
   }
   setVertexBuffer (slot: number, buffer: GPUBuffer, offset: number) {
     this._checkState()
+    buffer._lock()
     this._commands.push({
       name: 'setVertexBuffer',
       args: [slot, buffer, offset]
