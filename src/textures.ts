@@ -2,7 +2,7 @@ import { GPUExtent3D } from './interfaces'
 import dontKnow from './dontKnow'
 
 export interface GPUTexture {
-  
+
   createView (descriptor: GPUTextureViewDescriptor): GPUTextureView
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
@@ -12,7 +12,7 @@ export interface GPUTexture {
   _getHeight (): number
   _getWidth (): number
   _getDepth (): number
-  _getBuffer(arrayLevel: number, mipLevel: number): ArrayBuffer
+  _getBuffer (arrayLevel: number, mipLevel: number): ArrayBuffer
   _flush (): void
 }
 

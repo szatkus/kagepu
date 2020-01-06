@@ -27,7 +27,7 @@ interface GPUOrigin2DDict {
   y: number
 }
 
-type GPUOrigin2D = number[] | GPUOrigin2DDict 
+type GPUOrigin2D = number[] | GPUOrigin2DDict
 
 interface GPUImageBitmapCopyView {
   imageBitmap: ImageBitmap,
@@ -55,14 +55,14 @@ export default class KQueue implements GPUQueue {
     }
         // console.profileEnd()
   }
-  copyImageBitmapToTexture(source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
-    let origin: GPUOrigin2DDict = <GPUOrigin2DDict> source.origin ?? {x: 0, y: 0}
+  copyImageBitmapToTexture (source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
+    let origin: GPUOrigin2DDict = (source.origin as GPUOrigin2DDict) ?? { x: 0, y: 0 }
     let context = document.createElement('canvas').getContext('2d')
     context!.canvas.width = source.imageBitmap.width
     context!.canvas.height = source.imageBitmap.height
     context!.drawImage(source.imageBitmap, origin.x, origin.y)
     let imageData = context!.getImageData(0, 0, source.imageBitmap.width, source.imageBitmap.height)
-    let destinationOrigin = destination.origin ?? {x: 0, y: 0, z: 0}
+    let destinationOrigin = destination.origin ?? { x: 0, y: 0, z: 0 }
     for (let x = 0; x < copySize.width!; x++) {
       for (let y = 0; y < copySize.height!; y++) {
         for (let z = 0; z < copySize.depth!; z++) {

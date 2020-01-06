@@ -1,4 +1,4 @@
-import dontKnow from "./dontKnow"
+import dontKnow from './dontKnow'
 
 export interface GPUColorDict {
   r: number,

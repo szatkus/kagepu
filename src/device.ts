@@ -11,6 +11,7 @@ import GPUQueue from './GPUQueue'
 import KQueue from './KQueue'
 import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
 import { GPUError, GPUErrorFilter, GPUValidationError } from './errors'
+import { GPURenderBundleEncoder, GPURenderBundleEncoderDescriptor } from './GPURenderBundleEncoder'
 
 export const extensions = {
   anisotropicFiltering: false
@@ -109,6 +110,10 @@ export class GPUDevice {
 
   createCommandEncoder (descriptor?: any): GPUCommandEncoder {
     return new GPUCommandEncoder()
+  }
+
+  createRenderBundleEncoder (descriptor: GPURenderBundleEncoderDescriptor): GPURenderBundleEncoder {
+    return new GPURenderBundleEncoder(descriptor)
   }
 
   pushErrorScope (filter: GPUErrorFilter) {
