@@ -108,6 +108,13 @@ export class GPURenderPassEncoder {
       args: [index, bindGroup, dynamicOffsets]
     })
   }
+  setBlendColor (color: GPUColor) {
+    this._checkState()
+    this._commands.push({
+      name: 'setBlendColor',
+      args: [color]
+    })
+  }
   endPass () {
     this._checkState()
     this._isFinished = true
