@@ -105,6 +105,11 @@ export class GPUDevice {
         this._error = new GPUValidationError('Bindings count mismatch.')
       }
     }
+    for (let binding of descriptor.bindings) {
+      if (binding.binding >= descriptor.bindings.length) {
+        this._error = new GPUValidationError('Incorrect binding location.')
+      }
+    }
     return new GPUBindGroup(descriptor)
   }
 
