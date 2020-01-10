@@ -13,7 +13,7 @@ import { compile as vectorsCompile } from './vectors'
 import { compile as additionCompile } from './addition'
 import compiler from './compiler'
 import './images/'
-import { ImiOp } from './imi'
+import { ImiOp } from '../imi'
 
 export type CodeStream = Uint32Array
 

@@ -4,7 +4,7 @@ import { TypeImage } from '../types'
 import compiler from '../compiler'
 import { SampledImage } from './OpSampledImage'
 import { ConstantComposite } from '../memory'
-import dontKnow from '../../dontKnow'
+import dontKnow from '../dontKnow'
 
 compiler.addInstruction(95, (state: CompilationState, module: CompiledModule) => {
   let typeId = state.consumeWord()

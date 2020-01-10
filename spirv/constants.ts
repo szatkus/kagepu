@@ -1,9 +1,9 @@
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
 import { Type } from './types'
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 import { ConstantComposite } from './memory'
-import { ImiNumber, ImiGet, ImiCreateVariable, ImiPut, ImiPointerWrite } from './imi'
+import { ImiNumber, ImiGet, ImiCreateVariable, ImiPut, ImiPointerWrite } from '../imi'
 
 export function compile (state: CompilationState, module: CompiledModule) {
   switch (state.opCode) {

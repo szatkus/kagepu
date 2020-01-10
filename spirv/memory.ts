@@ -1,12 +1,12 @@
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatrix, TypeFloat } from './types'
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
-import { VertexInputs } from '../KQueue'
+import { VertexInputs } from '../webgpu/KQueue'
 import { Decorations, Location, DescriptorSet, Binding, Builtin } from './annotations'
-import { KTextureView } from '../textures'
-import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from './imi'
-import { KBuffer } from '../buffers'
+import { KTextureView } from '../webgpu/textures'
+import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from '../imi'
+import { KBuffer } from '../webgpu/buffers'
 
 export class Pointer {
   constructor (public memory: Memory, public address: number, public type: Type, private object: any = {}) {

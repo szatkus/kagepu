@@ -1,7 +1,7 @@
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
-import { ImiPut, ImiType, ImiNumber, ImiBoolean, ImiGet, ImiGroup } from './imi'
+import { ImiPut, ImiType, ImiNumber, ImiBoolean, ImiGet, ImiGroup } from '../imi'
 
 export class Type {
   getSize (): number {

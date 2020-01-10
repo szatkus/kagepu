@@ -1,9 +1,8 @@
-import { Type, TypeInt, TypeStruct } from './types'
-import { CompiledModule } from './compilation'
-import dontKnow from '../dontKnow'
-import { DescriptorSet, Binding } from './annotations'
-import { VertexInputs } from '../KQueue'
-import { KBindGroup } from '../bindGroups'
+import { Type, TypeInt, TypeStruct } from '../spirv/types'
+import { CompiledModule } from '../spirv/compilation'
+import dontKnow from './dontKnow'
+import { DescriptorSet, Binding } from '../spirv/annotations'
+import { VertexInputs } from '../webgpu/KQueue'
 
 type ImiId = number
 

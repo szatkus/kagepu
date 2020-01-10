@@ -1,14 +1,15 @@
 import { KTexture, KTextureView } from './textures'
 
 export class Context2DTexture implements KTexture {
-  destroy (): void {
-    throw new Error("Method not implemented.")
-  }
   private _imageData?: ImageData
   public label = 'texture'
 
   constructor (public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
 
+  }
+
+  destroy (): void {
+    throw new Error('Method not implemented.')
   }
 
   _getHeight (): number {

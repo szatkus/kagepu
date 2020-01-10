@@ -1,8 +1,8 @@
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
 import { Type } from './types'
-import dontKnow from '../dontKnow'
-import { ImiFunction, ImiFunctionEnd, ImiPut } from './imi'
+import dontKnow from './dontKnow'
+import { ImiFunction, ImiFunctionEnd, ImiPut } from '../imi'
 
 export interface FunctionDeclaration {
   functionType: Type

@@ -4,7 +4,7 @@
     "lib": ["es5", "es2015.promise", "dom"],
     "strict": true,
     "esModuleInterop": true,
-    "sourceRoot": "./src/",
+    "sourceRoot": "./webgpu/",
     "rootDir": "./",
     "sourceMap": true
   },

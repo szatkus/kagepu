@@ -1,5 +1,5 @@
 import { GPUShaderCode } from './interfaces'
-import { CompiledModule } from './spirv/compilation'
+import { CompiledModule } from '../spirv'
 
 const SPIRV_MAGIC_NUMBER = Number.parseInt('0x07230203')
 

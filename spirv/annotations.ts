@@ -1,5 +1,5 @@
 import { CompilationState, CompiledModule } from './compilation'
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 
 interface Decoration {
 

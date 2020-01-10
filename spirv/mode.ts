@@ -1,6 +1,6 @@
 import { CompilationState, CompiledModule } from './compilation'
-import dontKnow from '../dontKnow'
-import { ImiEntryPoint } from './imi'
+import dontKnow from './dontKnow'
+import { ImiEntryPoint } from '../imi'
 
 const CAPABILITY_SHADER = 1
 

@@ -1,6 +1,6 @@
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 import { Pointer, Memory } from './memory'
 import { TypeVector, TypeFloat } from './types'
 

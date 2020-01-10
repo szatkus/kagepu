@@ -1,4 +1,4 @@
-import kagegpu from '../src/index'
+import kagegpu from '../webgpu/index'
 
 import { expect } from 'chai'
 import 'mocha'

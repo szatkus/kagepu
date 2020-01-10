@@ -1,13 +1,12 @@
 import { Memory, InputMemory, Pointer, ConstantMemory } from './memory'
-import dontKnow from '../dontKnow'
+import dontKnow from './dontKnow'
 import { CompiledModule, compile } from './compilation'
-import { VertexInputs } from '../KQueue'
+import { VertexInputs } from '../webgpu/KQueue'
 import { FunctionDeclaration, FunctionEnd } from './functions'
 import { Decorations, Binding, DescriptorSet } from './annotations'
-import { KBindGroup, KBindGroupLayout } from '../bindGroups'
+import { KBindGroup, KBindGroupLayout } from '../webgpu/bindGroups'
 import { Type } from './types'
-import { KShaderModule } from '../GPUShaderModule'
-import { KBuffer } from '../buffers'
+import { KShaderModule } from '../webgpu/GPUShaderModule'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
