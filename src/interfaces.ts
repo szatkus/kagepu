@@ -1,9 +1,3 @@
-import GPUPipelineLayout from './GPUPipelineLayout'
-import GPUShaderModule from './GPUShaderModule'
-import { GPUBufferSize, GPUBuffer } from './buffers'
-import { GPUTexture } from './textures'
-import { GPUBindGroupLayout } from './bindGroups'
-
 export interface GPUObjectDescriptorBase {
   label?: string
 }
@@ -125,12 +119,6 @@ export enum GPUIndexFormat {
   uint32 = 'uint32'
 }
 
-export interface GPUVertexBufferLayoutDescriptor {
-  arrayStride: GPUBufferSize,
-  stepMode?: GPUInputStepMode,
-  attributes: Array<GPUVertexAttributeDescriptor>
-}
-
 export interface GPUVertexStateDescriptor {
   indexFormat?: GPUIndexFormat,
   vertexBuffers?: Array<GPUVertexBufferLayoutDescriptor>
@@ -143,13 +131,6 @@ export interface GPUComputePassDescriptor extends GPUObjectDescriptorBase {
 export interface GPUProgrammableStageDescriptor {
   module: GPUShaderModule
   entryPoint: string
-}
-
-export interface GPUBufferCopyView {
-  buffer: GPUBuffer,
-  offset?: GPUBufferSize,
-  rowPitch: number,
-  imageHeight: number,
 }
 
 export interface GPUOrigin3D {

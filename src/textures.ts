@@ -1,9 +1,6 @@
-import { GPUExtent3D } from './interfaces'
 import dontKnow from './dontKnow'
 
-export interface GPUTexture {
-
-  createView (descriptor: GPUTextureViewDescriptor): GPUTextureView
+export interface KTexture extends GPUTexture {
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
   _getPixel (x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number
@@ -23,10 +20,36 @@ interface MipMap {
   depth: number
 }
 
-export class KTexture implements GPUTexture {
+export function extent3DToDict (extent: GPUExtent3D): GPUExtent3DDict {
+  if (extent instanceof Array) {
+    return {
+      width: extent[0],
+      height: extent[1],
+      depth: extent[2]
+    }
+  } else {
+    return extent
+  }
+}
+
+export function origin3DToDict (origin: GPUOrigin3D): GPUOrigin3DDict {
+  if (origin instanceof Array) {
+    return {
+      x: origin[0],
+      y: origin[1],
+      z: origin[2]
+    }
+  } else {
+    return origin
+  }
+}
+
+export class KBufferTexture implements KTexture {
   _descriptor: GPUTextureDescriptor
   _buffers: Array<Array<MipMap>> = []
   _mipLevelCount: number
+  _size: GPUExtent3DDict
+  label = 'texture'
 
   constructor (descriptor: GPUTextureDescriptor) {
     this._descriptor = {...{
@@ -40,14 +63,15 @@ export class KTexture implements GPUTexture {
       ) {
       dontKnow()
     }
+    this._size = extent3DToDict(descriptor.size)
     // TODO: implement MSAA
     // TODO: ...and mipmapping
     for (let i = 0; i < this._descriptor.arrayLayerCount!; i++) {
       let buffer: Array<MipMap> = []
       this._buffers.push(buffer)
-      let width = this._descriptor.size.width!
-      let height = this._descriptor.size.height!
-      let depth = this._descriptor.size.depth!
+      let width = this._size.width
+      let height = this._size.height
+      let depth = this._size.depth
       for (let m = 0; m < this._mipLevelCount; m++) {
         buffer[m] = {
           buffer: new Uint32Array(width * height * depth),
@@ -64,18 +88,18 @@ export class KTexture implements GPUTexture {
   }
 
   _getHeight (): number {
-    return this._descriptor.size.height!
+    return this._size.height
   }
   _getWidth (): number {
-    return this._descriptor.size.width!
+    return this._size.width
   }
 
   _getDepth (): number {
-    return this._descriptor.size.depth!
+    return this._size.depth
   }
 
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
-    return new GPUTextureView(this, descriptor)
+    return new KTextureView(this, descriptor)
   }
 
   _getArrayLayerCount (): number {
@@ -167,11 +191,12 @@ export class KTexture implements GPUTexture {
   destroy () {}
 }
 
-export class GPUTextureView {
+export class KTextureView implements GPUTextureView {
   _baseMipLevel: number
   _baseArrayLayer: number
+  label = 'texture-view'
 
-  constructor (public _texture: GPUTexture, descriptor: GPUTextureViewDescriptor) {
+  constructor (public _texture: KTexture, descriptor: GPUTextureViewDescriptor) {
     this._baseMipLevel = descriptor.baseMipLevel || 0
     this._baseArrayLayer = descriptor.baseArrayLayer || 0
   }
@@ -179,100 +204,4 @@ export class GPUTextureView {
   _getBuffer (): ArrayBuffer {
     return this._texture._getBuffer(this._baseArrayLayer, this._baseMipLevel)
   }
-}
-
-export interface GPUTextureViewDescriptor {
-  format?: string,
-  dimension?: string,
-  aspect?: string,
-  baseMipLevel?: number,
-  mipLevelCount?: number,
-  baseArrayLayer?: number,
-  arrayLayerCount?: number
-}
-
-export interface GPUTextureDescriptor {
-  size: GPUExtent3D,
-  arrayLayerCount?: number,
-  mipLevelCount?: number,
-  sampleCount?: number,
-  dimension?: string,
-  format: string,
-  usage: number
-}
-
-export const GPUTextureUsage = {
-  NONE: 0,
-  TRANSFER_SRC: 1,
-  TRANSFER_DST: 2,
-  SAMPLED: 4,
-  STORAGE: 8,
-  OUTPUT_ATTACHMENT: 16
-}
-
-export const GPUTextureAspect = {
-  COLOR: 1,
-  DEPTH: 2,
-  STENCIL: 4
-}
-
-export enum GPUTextureFormat {
-  /* Normal 8 bit formats */
-  'r8unorm',
-  'r8unorm-srgb',
-  'r8snorm',
-  'r8uint',
-  'r8sint',
-  /* Normal 16 bit formats */
-  'r16unorm',
-  'r16snorm',
-  'r16uint',
-  'r16sint',
-  'r16float',
-  'rg8unorm',
-  'rg8unorm-srgb',
-  'rg8snorm',
-  'rg8uint',
-  'rg8sint',
-  /* Packed 16 bit formats */
-  'b5g6r5unorm',
-  /* Normal 32 bit formats */
-  'r32uint',
-  'r32sint',
-  'r32float',
-  'rg16unorm',
-  'rg16snorm',
-  'rg16uint',
-  'rg16sint',
-  'rg16float',
-  'rgba8unorm',
-  'rgba8unorm-srgb',
-  'rgba8snorm',
-  'rgba8uint',
-  'rgba8sint',
-  'bgra8unorm',
-  'bgra8unorm-srgb',
-  /* Packed 32 bit formats */
-  'rgb10a2unorm',
-  'rg11b10float',
-  /* Normal 64 bit formats */
-  'rg32uint',
-  'rg32sint',
-  'rg32float',
-  'rgba16unorm',
-  'rgba16snorm',
-  'rgba16uint',
-  'rgba16sint',
-  'rgba16float',
-  /* Normal 128 bit formats */
-  'rgba32uint',
-  'rgba32sint',
-  'rgba32float',
-  /* Depth and Stencil formats */
-  'depth32float',
-  // depth24plus has a precision of 1 ULP <= 1/(2**24).
-  // (This is unlike the 24-bit unsigned normalized format family typically
-  // found in native APIs, which has a precision of 1 ULP = 1/(2**24-1).)
-  'depth24plus',
-  'depth24plus-stencil8'
 }

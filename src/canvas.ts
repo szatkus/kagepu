@@ -1,15 +1,11 @@
-import { GPUDevice } from './device'
-import { GPUObjectDescriptorBase } from './interfaces'
-import { GPUTexture, GPUTextureView, GPUTextureViewDescriptor, GPUTextureFormat } from './textures'
+import { KTexture, KTextureView } from './textures'
 
-export interface GPUSwapChainDescriptor extends GPUObjectDescriptorBase {
-  device: GPUDevice,
-  format: GPUTextureFormat,
-  usage?: number
-}
-
-export class Context2DTexture implements GPUTexture {
+export class Context2DTexture implements KTexture {
+  destroy (): void {
+    throw new Error("Method not implemented.")
+  }
   private _imageData?: ImageData
+  public label = 'texture'
 
   constructor (public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
 
@@ -28,7 +24,7 @@ export class Context2DTexture implements GPUTexture {
   }
 
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
-    return new GPUTextureView(this, descriptor)
+    return new KTextureView(this, descriptor)
   }
 
   _getArrayLayerCount (): number {

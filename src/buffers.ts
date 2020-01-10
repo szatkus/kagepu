@@ -3,26 +3,9 @@ import { Memory } from './spirv/memory'
 
 export type GPUBufferSize = number
 
-export const GPUBufferUsage = {
-  NONE: 0,
-  MAP_READ: 1,
-  MAP_WRITE: 2,
-  COPY_SRC: 4,
-  COPY_DST: 8,
-  INDEX: 16,
-  VERTEX: 32,
-  UNIFORM: 64,
-  STORAGE: 128
-}
-
-export interface GPUBufferDescriptor {
-  size: number,
-  usage: number
-}
-
 let worker = new Worker('data:application/javascript,')
 
-export class GPUBuffer {
+export class KBuffer implements GPUBuffer {
   private _data: ArrayBuffer | undefined
   private _error: Error | undefined
   private _usage: number
@@ -30,6 +13,7 @@ export class GPUBuffer {
   private _toDetach: Array<ArrayBuffer> = []
   private _locks = 0
   private _monitors: Function[] = []
+  public label = 'buffer'
   constructor (descriptor: GPUBufferDescriptor, private _mapped = false) {
     try {
       this._data = new ArrayBuffer(descriptor.size)
@@ -42,7 +26,7 @@ export class GPUBuffer {
   /*
    * deprecated
    */
-  setSubData (offset: number, data: ArrayBuffer, srcOffset: number = 0, length: number = 0) {
+  setSubData (offset: number, data: ArrayBufferView, srcOffset: number = 0, length: number = 0) {
     if (this._error) {
       throw this._error
     }
@@ -68,7 +52,7 @@ export class GPUBuffer {
       debugger
     }
     // TODO: alignment
-    let input = new Uint8Array(data)
+    let input = new Uint8Array(data.buffer)
     let output = new Uint8Array(this._data!)
     for (let i = 0; i < data.byteLength; i++) {
       output[offset + i] = input[i]

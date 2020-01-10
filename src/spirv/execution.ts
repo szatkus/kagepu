@@ -1,12 +1,13 @@
 import { Memory, InputMemory, Pointer, ConstantMemory } from './memory'
 import dontKnow from '../dontKnow'
-import { GPUProgrammableStageDescriptor } from '../interfaces'
 import { CompiledModule, compile } from './compilation'
 import { VertexInputs } from '../KQueue'
 import { FunctionDeclaration, FunctionEnd } from './functions'
 import { Decorations, Binding, DescriptorSet } from './annotations'
-import { GPUBufferBinding, GPUBindGroup, GPUBindGroupBinding } from '../bindGroups'
+import { KBindGroup, KBindGroupLayout } from '../bindGroups'
 import { Type } from './types'
+import { KShaderModule } from '../GPUShaderModule'
+import { KBuffer } from '../buffers'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -140,36 +141,38 @@ export class Execution {
 class StorageBufferMemory extends Memory {
   constructor (private inputs: VertexInputs, private decorations: Decorations) {
     super(new ArrayBuffer(0))
-    inputs.bindGroups.forEach((bindingGroup: GPUBindGroup) => {
-      let validBindings = bindingGroup.descriptor.layout._getBindingsByType('storage-buffer')
+    // inputs.bindGroups.forEach((bindingGroup: KBindGroup) => {
+    //   let validBindings = bindingGroup._descriptor.layout._getBindingsByType('storage-buffer')
 
-    })
+    // })
   }
   createVariable (type: Type, resultId: number): Pointer {
     let binding: Binding = this.decorations.getSingleDecoration(resultId, Binding)
     let descriptorSet: DescriptorSet = this.decorations.getSingleDecoration(resultId, DescriptorSet)
-    let validBindings = this.inputs.bindGroups[descriptorSet.value].descriptor.layout._getBindingsByType('storage-buffer')
-    if (validBindings.indexOf(binding.value) === -1) {
-      dontKnow()
-    }
-    let perfectBinding = this.inputs.bindGroups[descriptorSet.value].descriptor.bindings.filter((g: GPUBindGroupBinding) => g.binding === binding.value)[0]
-    let buffer = perfectBinding.resource as GPUBufferBinding
-    if (!buffer.buffer || buffer.offset! > 0) {
-      dontKnow()
-    }
-    return new Pointer(buffer.buffer._useAsMemory(), 0, type)
+    return dontKnow()
+    // let validBindings = (this.inputs.bindGroups[descriptorSet.value]._descriptor.layout as KBindGroupLayout)._getBindingsByType('storage-buffer')
+    // if (validBindings.indexOf(binding.value) === -1) {
+    //   dontKnow()
+    // }
+    // let perfectBinding = this.inputs.bindGroups[descriptorSet.value]._descriptor.bindings.filter((g: GPUBindGroupBinding) => g.binding === binding.value)[0]
+    // let buffer = perfectBinding.resource as GPUBufferBinding
+    // if (!buffer.buffer || buffer.offset! > 0) {
+    //   dontKnow()
+    // }
+    // return new Pointer((buffer.buffer as KBuffer)._useAsMemory(), 0, type)
   }
 }
 
 export function executeShader (vertexStage: GPUProgrammableStageDescriptor, inputs: VertexInputs) {
-  if (!vertexStage.module._spirvCode) {
+  let shaderModule = vertexStage.module as KShaderModule
+  if (!shaderModule._spirvCode) {
     dontKnow()
   }
-  let code = vertexStage.module._spirvCode!
-  let compiled = vertexStage.module._compiled
+  let code = shaderModule._spirvCode!
+  let compiled = shaderModule._compiled
   if (compiled === undefined) {
     compiled = compile(code)
-    vertexStage.module._compiled = compiled
+    shaderModule._compiled = compiled
   }
   let inputMemory = new InputMemory(inputs, compiled.decorations)
   let storageBuffer = new StorageBufferMemory(inputs, compiled.decorations)

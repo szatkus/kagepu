@@ -1,11 +1,9 @@
-import { Type, TypeInt, TypePointer, TypeStruct } from './types'
+import { Type, TypeInt, TypeStruct } from './types'
 import { CompiledModule } from './compilation'
 import dontKnow from '../dontKnow'
-import { Pointer } from './memory'
-import { VertexInputs } from '../KQueue'
 import { DescriptorSet, Binding } from './annotations'
-import { GPUSampler } from '../samplers'
-import { GPUBufferBinding } from '../bindGroups'
+import { VertexInputs } from '../KQueue'
+import { KBindGroup } from '../bindGroups'
 
 type ImiId = number
 
@@ -338,22 +336,23 @@ class MemoryAllocator {
       offset += 4 - offset % 4
     }
     if (variable.memory instanceof BindedResource) {
-      this.inputs.bindGroups.forEach((value, set) => {
-        value.descriptor.bindings.forEach(value => {
-          if (variable.memory instanceof BindedResource && set <= variable.memory.descriptorSet && value.binding < variable.memory.bindingGroup) {
-            if (value.resource instanceof GPUSampler) {
-              return
-            }
-            let bufferBinding = value.resource as GPUBufferBinding
-            if (bufferBinding.size) {
-              offset += bufferBinding.size
-              return
-            }
-            dontKnow()
-          }
-        })
-      })
-      return offset
+      dontKnow()
+    //   this.inputs.bindGroups.forEach((value, set) => {
+    //     value.descriptor.bindings.forEach((value: KBindGroup) => {
+    //       if (variable.memory instanceof BindedResource && set <= variable.memory.descriptorSet && value.binding < variable.memory.bindingGroup) {
+    //         if (value.resource instanceof GPUSampler) {
+    //           return
+    //         }
+    //         let bufferBinding = value.resource as GPUBufferBinding
+    //         if (bufferBinding.size) {
+    //           offset += bufferBinding.size
+    //           return
+    //         }
+    //         dontKnow()
+    //       }
+    //     })
+    //   })
+    //   return offset
     }
     return -1
   }

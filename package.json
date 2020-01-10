@@ -3,6 +3,7 @@
   "dependencies": {
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
+    "@webgpu/types": "0.0.21",
     "chai": "^4.2.0",
     "mocha": "^6.1.4",
     "standard": "^14.3.1",

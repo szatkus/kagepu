@@ -4,10 +4,9 @@ import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
 import { VertexInputs } from '../KQueue'
 import { Decorations, Location, DescriptorSet, Binding, Builtin } from './annotations'
-import { GPUBufferBinding } from '../bindGroups'
-import { GPUTextureView } from '../textures'
-import { GPUSampler } from '../samplers'
+import { KTextureView } from '../textures'
 import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from './imi'
+import { KBuffer } from '../buffers'
 
 export class Pointer {
   constructor (public memory: Memory, public address: number, public type: Type, private object: any = {}) {
@@ -213,15 +212,15 @@ export class InputMemory extends Memory {
     }
     let descriptorSetDecoration: DescriptorSet = this.decorations.getSingleDecoration(resultId, DescriptorSet)
     if (descriptorSetDecoration) {
-      let descriptor = this.inputs.bindGroups[descriptorSetDecoration.value].descriptor
+      let descriptor = this.inputs.bindGroups[descriptorSetDecoration.value]._descriptor
       let bindingDecoration: Binding = this.decorations.getSingleDecoration(resultId, Binding)
       let binding = descriptor.bindings.filter(b => b.binding === bindingDecoration.value)[0]
       if ('buffer' in binding.resource) {
         let bufferBinding = binding.resource
         dontKnow()
-        return new Pointer(bufferBinding.buffer._useAsMemory(), bufferBinding.offset || 0, type)
+        return new Pointer((bufferBinding.buffer as KBuffer)._useAsMemory(), bufferBinding.offset || 0, type)
       }
-      if (binding.resource instanceof GPUTextureView) {
+      if (binding.resource instanceof KTextureView) {
         let buffer = binding.resource._getBuffer()
         return new Pointer(new Memory(buffer), 0, new TypeArray(type, buffer.byteLength), binding.resource)
       }

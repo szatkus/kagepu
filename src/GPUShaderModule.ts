@@ -10,9 +10,10 @@ export const GPUShaderStage = {
   COMPUTE: 4
 }
 
-export default class {
+export class KShaderModule implements GPUShaderModule {
   _spirvCode?: Uint32Array
   _compiled?: CompiledModule
+  public label = 'shader-module'
   constructor (code: GPUShaderCode) {
     if (code[0] === SPIRV_MAGIC_NUMBER) {
       this._spirvCode = code as Uint32Array

@@ -1,10 +1,9 @@
-import { GPUCommandBuffer } from './GPUQueue'
-import { GPURenderPassEncoder, GPURenderPassDescriptor, KCommand } from './GPURenderPassEncoder'
-import { GPUBuffer, GPUBufferSize } from './buffers'
-import { GPUExtent3D, GPUComputePassDescriptor, GPUBufferCopyView, GPUTextureCopyView } from './interfaces'
+import { GPURenderPassEncoder, KCommand } from './GPURenderPassEncoder'
+import { GPUBufferSize, KBuffer } from './buffers'
 import { GPUComputePassEncoder } from './GPUComputePassEncoder'
 
 export class KCommandBuffer implements GPUCommandBuffer {
+  label = 'command-buffer'
   constructor (public _commands: KCommand[]) {}
 }
 
@@ -31,9 +30,9 @@ export default class GPUCommandEncoder {
   }
 
   copyBufferToBuffer (source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
-    this._checkState()
-    source._lock()
-    destination._lock()
+    this._checkState();
+    (source as KBuffer)._lock();
+    (destination as KBuffer)._lock()
     this._commands.push({
       name: 'copyBufferToBuffer',
       args: [source, sourceOffset, destination, destinationOffset, size]
@@ -41,8 +40,9 @@ export default class GPUCommandEncoder {
   }
 
   copyBufferToTexture (source: GPUBufferCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
+    let buffer = source.buffer as KBuffer
     this._checkState()
-    source.buffer._lock()
+    buffer._lock()
     this._commands.push({
       name: 'copyBufferToTexture',
       args: [source, destination, copySize]
@@ -50,8 +50,9 @@ export default class GPUCommandEncoder {
   }
 
   copyTextureToBuffer (source: GPUTextureCopyView, destination: GPUBufferCopyView, copySize: GPUExtent3D) {
+    let buffer = destination.buffer as KBuffer
     this._checkState()
-    destination.buffer._lock()
+    buffer._lock()
     this._commands.push({
       name: 'copyTextureToBuffer',
       args: [source, destination, copySize]

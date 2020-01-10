@@ -3,8 +3,6 @@ import { Execution } from '../execution'
 import { TypeSampledImage, TypeImage, TypeSampler } from '../types'
 import compiler from '../compiler'
 import { Pointer } from '../memory'
-import { GPUTexture } from '../../textures'
-import { GPUSampler } from '../../samplers'
 
 export class SampledImage {
   constructor (private type: TypeSampledImage, private image: GPUTexture, private sampler: GPUSampler) {

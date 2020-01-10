@@ -1,3 +1,3 @@
-export class GPUSampler {
-
+export class KSampler implements GPUSampler {
+  label = 'sampler'
 }

@@ -1,20 +1,17 @@
-import GPUQueue from './GPUQueue'
 import { KCommandBuffer } from './GPUCommandEncoder'
-import { GPURenderPipeline } from './GPURenderPipeline'
-import { GPURenderPassEncoder, KCommand, GPURenderPassDescriptor, GPUStoreOp } from './GPURenderPassEncoder'
-import { GPUBindGroup } from './bindGroups'
-import { GPUBuffer, GPUBufferSize } from './buffers'
+import { KCommand, KRenderPipeline } from './GPURenderPassEncoder'
+import { KBindGroup } from './bindGroups'
+import { KBuffer, GPUBufferSize } from './buffers'
 import dontKnow from './dontKnow'
-import { GPUInputStepMode, GPUIndexFormat, GPUComputePassDescriptor, GPUProgrammableStageDescriptor, GPUBufferCopyView, GPUTextureCopyView, GPUExtent3D, GPUVertexFormat, GPUOrigin3D } from './interfaces'
 import { executeShader } from './spirv/execution'
 import { GPUComputePipeline } from './GPUComputePipeline'
-import { GPUFenceDescriptor, GPUFence } from './GPUFence'
-import { GPUTexture } from './textures'
-import { GPUColor, colorToNumber } from './colors'
+import { KFence } from './GPUFence'
+import { extent3DToDict, origin3DToDict, KTexture, KTextureView } from './textures'
+import { colorToNumber } from './colors'
 
 export interface VertexInputs {
   buffer: ArrayBuffer,
-  bindGroups: GPUBindGroup[],
+  bindGroups: KBindGroup[],
   locations: {
     start: number,
     length: number
@@ -29,21 +26,17 @@ interface GPUOrigin2DDict {
 
 type GPUOrigin2D = number[] | GPUOrigin2DDict
 
-interface GPUImageBitmapCopyView {
-  imageBitmap: ImageBitmap,
-  origin?: GPUOrigin2D
-}
-
 export default class KQueue implements GPUQueue {
   _pipeline?: GPURenderPipeline | GPUComputePipeline
   _indexBuffer = new ArrayBuffer(64)
   _vertexBuffers: ArrayBuffer[] = []
   _passDescriptor?: GPURenderPassDescriptor | GPUComputePassDescriptor
-  _bindGroups: GPUBindGroup[] = []
-  createFence (descriptor: GPUFenceDescriptor = { }): GPUFence {
-    return new GPUFence(descriptor)
+  _bindGroups: KBindGroup[] = []
+  public label = 'queue'
+  createFence (descriptor: GPUFenceDescriptor = {}): GPUFence {
+    return new KFence(descriptor)
   }
-  signal (fence: GPUFence, signalValue: number) {
+  signal (fence: KFence, signalValue: number) {
     fence._value = signalValue
   }
   submit (buffers: KCommandBuffer[]) {
@@ -56,13 +49,14 @@ export default class KQueue implements GPUQueue {
     context!.canvas.height = source.imageBitmap.height
     context!.drawImage(source.imageBitmap, origin.x, origin.y)
     let imageData = context!.getImageData(0, 0, source.imageBitmap.width, source.imageBitmap.height)
-    let destinationOrigin = destination.origin ?? { x: 0, y: 0, z: 0 }
-    for (let x = 0; x < copySize.width!; x++) {
-      for (let y = 0; y < copySize.height!; y++) {
-        for (let z = 0; z < copySize.depth!; z++) {
+    let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
+    copySize = extent3DToDict(copySize)
+    for (let x = 0; x < copySize.width; x++) {
+      for (let y = 0; y < copySize.height; y++) {
+        for (let z = 0; z < copySize.depth; z++) {
           let offset = (y * imageData.width + x) * 4
-          let pixel = imageData.data[offset] + imageData.data[offset + 1] * 0x100 + imageData.data[offset + 2] * 0x10000 + imageData.data[offset + 3] * 0x1000000
-          destination.texture._putPixel(pixel,
+          let pixel = imageData.data[offset] + imageData.data[offset + 1] * 0x100 + imageData.data[offset + 2] * 0x10000 + imageData.data[offset + 3] * 0x1000000;
+          (destination.texture as KTexture)._putPixel(pixel,
             x + (destinationOrigin.x ?? 0),
             y + (destinationOrigin.y ?? 0),
             z + (destinationOrigin.z ?? 0),
@@ -98,23 +92,23 @@ export default class KQueue implements GPUQueue {
     let defaultColor = { r: 0, b: 0, g: 0, a: 1 }
     let renderPassDescriptor = descriptor as GPURenderPassDescriptor
     for (let attachment of renderPassDescriptor.colorAttachments || []) {
-      clear(attachment.attachment._texture, (attachment.loadValue as GPUColor) || defaultColor)
+      clear((attachment.attachment as KTextureView)._texture, (attachment.loadValue as GPUColor) || defaultColor)
     }
     this._passDescriptor = descriptor
   }
   __command__setPipeline (pipeline: GPURenderPipeline) {
     this._pipeline = pipeline
   }
-  __command__setIndexBuffer (buffer: GPUBuffer, offset: number) {
+  __command__setIndexBuffer (buffer: KBuffer, offset: number) {
     this._indexBuffer = buffer._getArrayBuffer().slice(offset)
   }
-  __command__setVertexBuffer (slot: number, buffer: GPUBuffer, offset: number) {
+  __command__setVertexBuffer (slot: number, buffer: KBuffer, offset: number) {
     this._vertexBuffers[slot] = buffer._getArrayBuffer().slice(offset)
   }
-  __command__setBindGroup (index: number, bindGroup: GPUBindGroup, dynamicOffsets?: Array<number>) {
+  __command__setBindGroup (index: number, bindGroup: KBindGroup, dynamicOffsets?: Array<number>) {
     this._bindGroups[index] = bindGroup
   }
-  __command__copyBufferToBuffer (source: GPUBuffer, sourceOffset: GPUBufferSize, destination: GPUBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
+  __command__copyBufferToBuffer (source: KBuffer, sourceOffset: GPUBufferSize, destination: KBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
     let sourceView = new Uint8Array(source._mapWrite())
     let destinationView = new Uint8Array(destination._mapWrite())
     for (let i = 0; i < size; i++) {
@@ -133,19 +127,20 @@ export default class KQueue implements GPUQueue {
     destination = {
       ...{
         mipLevel: 0,
-        arrayLayer: 0,
-        origin: { x: 0, y: 0, z: 0 }
+        arrayLayer: 0
       },
       ...destination
     }
+    let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
     if (
             source.offset! !== 0 ||
-            destination.origin!.x! !== 0 ||
-            destination.origin!.y! !== 0 ||
-            destination.origin!.z! !== 0
+            destinationOrigin.x !== 0 ||
+            destinationOrigin.y !== 0 ||
+            destinationOrigin.z !== 0
             ) {
       dontKnow()
     }
+    copySize = extent3DToDict(copySize)
     if (
             !copySize.width ||
             !copySize.height ||
@@ -154,16 +149,18 @@ export default class KQueue implements GPUQueue {
             ) {
       dontKnow()
     }
-    let view = source.buffer._getArray(destination.texture._getPixelSize())
-    for (let x = 0; x < copySize.width!; x++) {
-      for (let y = 0; y < copySize.height!; y++) {
-        for (let z = 0; z < copySize.depth!; z++) {
+    let buffer = source.buffer as KBuffer
+    let texture = destination.texture as KTexture
+    let view = buffer._getArray(texture._getPixelSize())
+    for (let x = 0; x < copySize.width; x++) {
+      for (let y = 0; y < copySize.height; y++) {
+        for (let z = 0; z < copySize.depth; z++) {
           let pixel = view[z * source.imageHeight * source.rowPitch + source.rowPitch * y + x]
-          destination.texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
+          texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
         }
       }
     }
-    source.buffer._unlock()
+    buffer._unlock()
   }
   __command__copyTextureToTexture (source: GPUTextureCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     let arrayLayer = source.arrayLayer || 0
@@ -177,17 +174,19 @@ export default class KQueue implements GPUQueue {
     if (arrayLayer !== 0 || mipLevel !== 0 || origin.x !== 0 || origin.y !== 0 || origin.z !== 0) {
       dontKnow()
     }
-    if (destination.origin!.y !== 0) {
+    let destinationOrigin = origin3DToDict(destination.origin ?? {x: 0, y: 0, z: 0})
+    if (destinationOrigin !== 0) {
       dontKnow()
     }
+    copySize = extent3DToDict(copySize)
     if (!copySize.width || !copySize.height || !copySize.depth) {
       dontKnow()
     }
-    for (let x = 0; x < copySize.width!; x++) {
-      for (let y = 0; y < copySize.height!; y++) {
-        for (let z = 0; z < copySize.depth!; z++) {
-          let pixel = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
-          destination.texture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
+    for (let x = 0; x < copySize.width; x++) {
+      for (let y = 0; y < copySize.height; y++) {
+        for (let z = 0; z < copySize.depth; z++) {
+          let pixel = (source.texture as KTexture)._getPixel(x, y, z, arrayLayer, mipLevel);
+          (destination.texture as KTexture)._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
         }
       }
     }
@@ -207,20 +206,23 @@ export default class KQueue implements GPUQueue {
     if (destination.offset) {
       dontKnow()
     }
+    copySize = extent3DToDict(copySize)
     if (!copySize.width || !copySize.height || !copySize.depth) {
       dontKnow()
     }
-    let view = destination.buffer._getArray(source.texture._getPixelSize())
-    for (let x = 0; x < copySize.width!; x++) {
-      for (let y = 0; y < copySize.height!; y++) {
-        for (let z = 0; z < copySize.depth!; z++) {
-          let pixel = source.texture._getPixel(x, y, z, arrayLayer, mipLevel)
+    let buffer = destination.buffer as KBuffer
+    let texture = source.texture as KTexture
+    let view = buffer._getArray(texture._getPixelSize())
+    for (let x = 0; x < copySize.width; x++) {
+      for (let y = 0; y < copySize.height; y++) {
+        for (let z = 0; z < copySize.depth; z++) {
+          let pixel = texture._getPixel(x, y, z, arrayLayer, mipLevel)
           let offset = x + y * destination.rowPitch / view.BYTES_PER_ELEMENT + z * destination.imageHeight * destination.rowPitch / view.BYTES_PER_ELEMENT
           view[offset] = pixel
         }
       }
     }
-    destination.buffer._unlock()
+    buffer._unlock()
   }
   __command__dispatch (x: number, y: number, z: number) {
     let pipeline = this._pipeline as GPUComputePipeline
@@ -235,7 +237,7 @@ export default class KQueue implements GPUQueue {
   }
   __command__draw (vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
     let passDescriptor = this._passDescriptor! as GPURenderPassDescriptor
-    let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as GPURenderPipeline
+    let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as KRenderPipeline
 
     let offsets: number[] = []
     let vertexStage = pipeline._descriptor.vertexStage
@@ -271,8 +273,8 @@ export default class KQueue implements GPUQueue {
       verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, vertexInput)
     }
     for (let colorAttachment of passDescriptor.colorAttachments) {
-      let output = colorAttachment.attachment._texture
-      let storeMode = colorAttachment.storeOp ?? GPUStoreOp.STORE
+      let output = (colorAttachment.attachment as KTextureView)._texture
+      let storeMode = colorAttachment.storeOp ?? 'store'
       if (pipeline._descriptor.primitiveTopology !== 'triangle-list' || vertexCount % 3 !== 0) dontKnow()
       let width = output._getWidth()
       let height = output._getHeight()
@@ -291,10 +293,10 @@ export default class KQueue implements GPUQueue {
             (dir1 === 0 && dir3 === 0) ||
             (dir2 === 0 && dir2 === 0)) {
               let inputBuffer = new ArrayBuffer(32)
-              let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage, { buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: [] })
+              let pixelData = executeFragmentShader(pipeline._descriptor.fragmentStage!, { buffer: inputBuffer, bindGroups: this._bindGroups, locations: [], builtins: [] })
                           // no idea what to do when a texture has more levels
-              if (storeMode === GPUStoreOp.STORE) {
-                output._putPixel(colorToNumber(pixelData.color), x, y, 0, 0, 0)
+              if (storeMode === 'store') {
+                output._putPixel(colorToNumber(pixelData.color as [number, number, number, number]), x, y, 0, 0, 0)
               }
             }
           }
@@ -305,7 +307,7 @@ export default class KQueue implements GPUQueue {
     }
   }
   __command__drawIndexed (indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
-    let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as GPURenderPipeline
+    let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as KRenderPipeline
 
     let offsets: number[] = []
     let vertexStage = pipeline._descriptor.vertexStage
@@ -328,7 +330,7 @@ export default class KQueue implements GPUQueue {
         let descriptor = vertexBuffers[j]
         let indexBuffer = new Uint16Array(this._indexBuffer)
         let vertexBuffer = new Uint8Array(this._vertexBuffers[j])
-        if (descriptor.stepMode !== GPUInputStepMode.vertex || vertexState!.indexFormat !== GPUIndexFormat.uint16 || descriptor.attributes.length > 1 || descriptor.attributes[0].offset !== 0) {
+        if (descriptor.stepMode !== 'vertex' || vertexState!.indexFormat !== 'uint16' || descriptor.attributes.length > 1 || descriptor.attributes[0].offset !== 0) {
           dontKnow()
         }
         let index = indexBuffer[i]
@@ -342,7 +344,7 @@ export default class KQueue implements GPUQueue {
         }
       }
       verticiesData[i] = executeVertexShader(pipeline._descriptor.vertexStage, inputs)
-      executeFragmentShader(pipeline._descriptor.fragmentStage, inputs)
+      executeFragmentShader(pipeline._descriptor.fragmentStage!, inputs)
       debugger
       throw new Error('ALT')
     }
@@ -390,9 +392,9 @@ function copyBytes (output: Uint8Array, outputOffset: number, length: number, in
   }
 }
 
-const dataLength: Map<GPUVertexFormat, number> = new Map([[GPUVertexFormat.FLOAT4, 16]])
+const dataLength: Map<GPUVertexFormat, number> = new Map([['float4', 16]])
 
-function clear (texture: GPUTexture, color: GPUColor) {
+function clear (texture: KTexture, color: GPUColor) {
   for (let arrayLayer = 0; arrayLayer < texture._getArrayLayerCount(); arrayLayer++) {
     for (let mipmapLevel = 0; mipmapLevel < texture._getMipmapLevelCount(); mipmapLevel++) {
       for (let x = 0; x < texture._getWidth(); x++) {

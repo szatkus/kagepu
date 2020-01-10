@@ -1,44 +1,5 @@
-import { GPURenderPipeline } from './GPURenderPipeline'
-import { GPUBuffer } from './buffers'
-import { GPUBindGroup } from './bindGroups'
+import { KBuffer } from './buffers'
 import dontKnow from './dontKnow'
-import { GPUObjectDescriptorBase } from './interfaces'
-import { GPUTextureView } from './textures'
-import { GPUColor } from './colors'
-
-export enum GPULoadOp {
-  LOAD = 'load'
-}
-
-export enum GPUStoreOp {
-  CLEAR = 'clear',
-  STORE = 'store'
-}
-
-interface GPURenderPassColorAttachmentDescriptor {
-  attachment: GPUTextureView,
-  resolveTarget?: GPUTextureView,
-
-  storeOp: GPUStoreOp,
-  loadValue: GPULoadOp | GPUColor
-}
-
-interface GPURenderPassDepthStencilAttachmentDescriptor {
-  attachment: GPUTextureView,
-
-  depthLoadOp: GPULoadOp,
-  depthStoreOp: GPUStoreOp,
-  clearDepth: number,
-
-  stencilLoadOp: GPULoadOp,
-  stencilStoreOp: GPUStoreOp,
-  clearStencil?: number
-}
-
-export interface GPURenderPassDescriptor extends GPUObjectDescriptorBase {
-  colorAttachments: Array<GPURenderPassColorAttachmentDescriptor>,
-  depthStencilAttachment?: GPURenderPassDepthStencilAttachmentDescriptor
-}
 
 export interface KPUDrawStep {
   vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number
@@ -47,6 +8,13 @@ export interface KPUDrawStep {
 export interface KCommand {
   name: String,
   args: Array<any>
+}
+
+export class KRenderPipeline implements GPURenderPipeline {
+  public label = 'render-pipeline'
+  constructor (public _descriptor: GPURenderPipelineDescriptor) {
+
+  }
 }
 
 export class GPURenderPassEncoder {
@@ -66,7 +34,7 @@ export class GPURenderPassEncoder {
       args: [pipeline]
     })
   }
-  setIndexBuffer (buffer: GPUBuffer, offset: number = 0) {
+  setIndexBuffer (buffer: KBuffer, offset: number = 0) {
     this._checkState()
     buffer._lock()
     this._commands.push({
@@ -74,7 +42,7 @@ export class GPURenderPassEncoder {
       args: [buffer, offset]
     })
   }
-  setVertexBuffer (slot: number, buffer: GPUBuffer, offset: number) {
+  setVertexBuffer (slot: number, buffer: KBuffer, offset: number) {
     this._checkState()
     buffer._lock()
     this._commands.push({

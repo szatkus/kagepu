@@ -1,7 +1,6 @@
 import { KCommand } from './GPURenderPassEncoder'
 import { GPUComputePassDescriptor } from './interfaces'
 import { GPUComputePipeline } from './GPUComputePipeline'
-import { GPUBindGroup } from './bindGroups'
 
 export class GPUComputePassEncoder {
 

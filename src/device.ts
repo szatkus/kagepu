@@ -1,17 +1,14 @@
-import { GPUSamplerDescriptor, GPUShaderModuleDescriptor, GPUPipelineLayoutDescriptor } from './interfaces'
-import { GPUBuffer, GPUBufferDescriptor } from './buffers'
-import { GPUTexture, GPUTextureDescriptor, KTexture } from './textures'
-import { GPUSampler } from './samplers'
-import GPUShaderModule from './GPUShaderModule'
-import GPUPipelineLayout from './GPUPipelineLayout'
-import { GPURenderPipeline, GPURenderPipelineDescriptor } from './GPURenderPipeline'
+import { KBuffer } from './buffers'
+import { KTexture, KBufferTexture } from './textures'
+import { KSampler } from './samplers'
 import GPUCommandEncoder from './GPUCommandEncoder'
-import { GPUBindGroup, GPUBindGroupDescriptor, GPUBindGroupLayout, GPUBindGroupLayoutDescriptor } from './bindGroups'
-import GPUQueue from './GPUQueue'
+import { KBindGroupLayout, KBindGroup } from './bindGroups'
 import KQueue from './KQueue'
-import { GPUComputePipelineDescriptor, GPUComputePipeline } from './GPUComputePipeline'
-import { GPUError, GPUErrorFilter, GPUValidationError } from './errors'
-import { GPURenderBundleEncoder, GPURenderBundleEncoderDescriptor } from './GPURenderBundleEncoder'
+import { GPUComputePipeline } from './GPUComputePipeline'
+import { KValidationError } from './errors'
+import { GPURenderBundleEncoder } from './GPURenderBundleEncoder'
+import { KShaderModule } from './GPUShaderModule'
+import { KRenderPipeline } from './GPURenderPassEncoder'
 
 export const extensions = {
   anisotropicFiltering: false
@@ -20,11 +17,18 @@ export const limits = {
   maxBindGroups: 8
 }
 
+export class KPipelineLayout implements GPUPipelineLayout {
+  public label = 'pipeline-layout'
+  constructor (public _descriptor: GPUPipelineLayoutDescriptor) {
+
+  }
+}
+
 export class GPUDevice {
   public extensions = extensions
   public limit = limits
   public adapter: GPUAdapter
-  private _filters: GPUErrorFilter = GPUErrorFilter.NONE
+  private _filters: GPUErrorFilter = 'none'
   private _error?: GPUError
   public defaultQueue = new KQueue()
 
@@ -33,11 +37,11 @@ export class GPUDevice {
   }
 
   createBuffer (descriptor: GPUBufferDescriptor): GPUBuffer {
-    return new GPUBuffer(descriptor)
+    return new KBuffer(descriptor)
   }
 
   createBufferMapped (descriptor: GPUBufferDescriptor): [GPUBuffer, ArrayBuffer] {
-    let buffer = new GPUBuffer(descriptor, true)
+    let buffer = new KBuffer(descriptor, true)
     return [buffer, buffer._mapWrite()]
   }
 
@@ -49,50 +53,50 @@ export class GPUDevice {
   }
 
   createTexture (descriptor: GPUTextureDescriptor): GPUTexture {
-    return new KTexture(descriptor)
+    return new KBufferTexture(descriptor)
   }
 
   createSampler (descriptor: GPUSamplerDescriptor): GPUSampler {
-    return new GPUSampler()
+    return new KSampler()
   }
 
   createBindGroupLayout (descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
-    return new GPUBindGroupLayout(descriptor)
+    return new KBindGroupLayout(descriptor)
   }
 
   createPipelineLayout (descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
-    return new GPUPipelineLayout(descriptor)
+    return new KPipelineLayout(descriptor)
   }
 
   createShaderModule (descriptor: GPUShaderModuleDescriptor): GPUShaderModule {
-    return new GPUShaderModule(descriptor.code)
+    return new KShaderModule(descriptor.code)
   }
 
   createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     if (this._validation() && descriptor.vertexState) {
       if ((descriptor.vertexState.vertexBuffers?.length ?? 0) > 16) {
-        this._error = new GPUValidationError('Too many vertex buffers.')
+        this._error = new KValidationError('Too many vertex buffers.')
       }
       if ((descriptor.vertexState.vertexBuffers ?? []).map(v => v.attributes.length).reduce((a, b) => a + b, 0) > 16) {
-        this._error = new GPUValidationError('Too many attributes.')
+        this._error = new KValidationError('Too many attributes.')
       }
       let locations = new Set()
       for (let vertexBuffer of descriptor.vertexState.vertexBuffers || []) {
         if ((vertexBuffer.arrayStride ?? 0) > 2048) {
-          this._error = new GPUValidationError('Too large array stride.')
+          this._error = new KValidationError('Too large array stride.')
         }
         for (let attribute of vertexBuffer.attributes) {
           if ((vertexBuffer.arrayStride ?? 0) > 0 && attribute.offset >= vertexBuffer.arrayStride) {
-            this._error = new GPUValidationError('Attribute offset cannot exceed vertex buffer array stride.')
+            this._error = new KValidationError('Attribute offset cannot exceed vertex buffer array stride.')
           }
           if (locations.has(attribute.shaderLocation)) {
-            this._error = new GPUValidationError('Multiple attributes in one location.')
+            this._error = new KValidationError('Multiple attributes in one location.')
           }
           locations.add(attribute.shaderLocation)
         }
       }
     }
-    return new GPURenderPipeline(descriptor)
+    return new KRenderPipeline(descriptor)
   }
 
   createComputePipeline (descriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
@@ -101,7 +105,7 @@ export class GPUDevice {
 
   createBindGroup (descriptor: GPUBindGroupDescriptor): GPUBindGroup {
     if (this._validation()) {
-      if (descriptor.layout._getBindingsCount() !== descriptor.bindings.length) {
+      if ((descriptor.layout as KBindGroupLayout)._getBindingsCount() !== descriptor.bindings.length) {
         this._error = new GPUValidationError('Bindings count mismatch.')
       }
     }
@@ -110,7 +114,7 @@ export class GPUDevice {
         this._error = new GPUValidationError('Incorrect binding location.')
       }
     }
-    return new GPUBindGroup(descriptor)
+    return new KBindGroup(descriptor)
   }
 
   createCommandEncoder (descriptor?: any): GPUCommandEncoder {
@@ -139,7 +143,7 @@ export class GPUDevice {
   }
 
   _validation (): boolean {
-    return this._filters === GPUErrorFilter.VALIDATION
+    return this._filters === 'validation'
   }
 }
 

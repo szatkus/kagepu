@@ -1,13 +1,5 @@
-import { GPUTextureFormat } from './textures'
-import { GPUBindGroup } from './bindGroups'
 import { KCommand } from './GPURenderPassEncoder'
 import dontKnow from './dontKnow'
-
-export interface GPURenderBundleEncoderDescriptor {
-  colorFormats: GPUTextureFormat[],
-  depthStencilFormat?: GPUTextureFormat,
-  sampleCount?: number
-}
 
 export class GPURenderBundleEncoder {
   private _isFinished = false

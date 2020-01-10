@@ -1,11 +1,6 @@
-import { GPUObjectDescriptorBase } from './interfaces'
-
-export interface GPUFenceDescriptor extends GPUObjectDescriptorBase {
-  initialValue?: number
-}
-
-export class GPUFence {
-  _value: number
+export class KFence implements GPUFence {
+  public _value: number
+  public label = 'fence'
   constructor (descriptor: GPUFenceDescriptor) {
     this._value = descriptor.initialValue || 0
   }

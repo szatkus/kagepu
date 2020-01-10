@@ -2,7 +2,6 @@ import kagegpu from '../src/index'
 
 import { expect } from 'chai'
 import 'mocha'
-import { GPUBufferUsage } from '../src/buffers'
 
 describe('GPUBuffer', () => {
   it('test buffer operations', async () => {
@@ -16,7 +15,7 @@ describe('GPUBuffer', () => {
     array[0] = 43
     array[13] = 72
     array[63] = 221
-    buffer.setSubData(64, array.buffer)
+    buffer.setSubData(64, array)
     let readBuffer = await buffer.mapReadAsync()
     let readArray = new Uint8Array(readBuffer)
     expect(readArray[64]).to.equal(43)
