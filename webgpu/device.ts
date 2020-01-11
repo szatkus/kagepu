@@ -61,6 +61,32 @@ export class GPUDevice {
   }
 
   createBindGroupLayout (descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
+    if (this._validation()) {
+      let locations = new Set()
+      let storageBuffers = 0
+      let uniformBuffers = 0
+      for (let layout of descriptor.bindings ?? []) {
+        if (locations.has(layout.binding) || layout.binding < 0) {
+          this._error = new GPUValidationError('Incorrect binding.')
+        }
+        if (layout.type === 'storage-buffer') {
+          storageBuffers++
+        }
+        if (layout.type === 'uniform-buffer') {
+          uniformBuffers++
+        }
+        if (layout.hasDynamicOffset && layout.type !== 'storage-buffer' && layout.type !== 'readonly-storage-buffer' && layout.type !== 'uniform-buffer') {
+          this._error = new GPUValidationError('Dynamic offset is allowed only for buffers.')
+        }
+        locations.add(layout.binding)
+      }
+      if (storageBuffers > 4) {
+        this._error = new GPUValidationError('Too many storage buffers.')
+      }
+      if (uniformBuffers > 8) {
+        this._error = new GPUValidationError('Too many uniform buffers.')
+      }
+    }
     return new KBindGroupLayout(descriptor)
   }
 
@@ -75,22 +101,22 @@ export class GPUDevice {
   createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     if (this._validation() && descriptor.vertexState) {
       if ((descriptor.vertexState.vertexBuffers?.length ?? 0) > 16) {
-        this._error = new KValidationError('Too many vertex buffers.')
+        this._error = new GPUValidationError('Too many vertex buffers.')
       }
       if ((descriptor.vertexState.vertexBuffers ?? []).map(v => v.attributes.length).reduce((a, b) => a + b, 0) > 16) {
-        this._error = new KValidationError('Too many attributes.')
+        this._error = new GPUValidationError('Too many attributes.')
       }
       let locations = new Set()
       for (let vertexBuffer of descriptor.vertexState.vertexBuffers || []) {
         if ((vertexBuffer.arrayStride ?? 0) > 2048) {
-          this._error = new KValidationError('Too large array stride.')
+          this._error = new GPUValidationError('Too large array stride.')
         }
         for (let attribute of vertexBuffer.attributes) {
           if ((vertexBuffer.arrayStride ?? 0) > 0 && attribute.offset >= vertexBuffer.arrayStride) {
-            this._error = new KValidationError('Attribute offset cannot exceed vertex buffer array stride.')
+            this._error = new GPUValidationError('Attribute offset cannot exceed vertex buffer array stride.')
           }
           if (locations.has(attribute.shaderLocation)) {
-            this._error = new KValidationError('Multiple attributes in one location.')
+            this._error = new GPUValidationError('Multiple attributes in one location.')
           }
           locations.add(attribute.shaderLocation)
         }
