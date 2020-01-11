@@ -10,6 +10,12 @@ export class KBindGroupLayout implements GPUBindGroupLayout {
   constructor (private _descriptor: GPUBindGroupLayoutDescriptor) {
   }
 
+  _getBindings (index: number): GPUBindGroupLayoutBinding | undefined {
+    if (this._descriptor.bindings) {
+      return this._descriptor.bindings[index]
+    }
+  }
+
   _getBindingsByType (type: String): number[] {
     return (this._descriptor.bindings ?? []).filter(binding => binding.type === type).map(binding => binding.binding)
   }

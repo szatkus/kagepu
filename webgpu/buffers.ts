@@ -5,6 +5,18 @@ export type GPUBufferSize = number
 
 let worker = new Worker('data:application/javascript,')
 
+export const KBufferUsage = {
+  MAP_READ:  0x0001,
+  MAP_WRITE: 0x0002,
+  COPY_SRC:  0x0004,
+  COPY_DST:  0x0008,
+  INDEX:     0x0010,
+  VERTEX:    0x0020,
+  UNIFORM:   0x0040,
+  STORAGE:   0x0080,
+  INDIRECT:  0x0100
+}
+
 export class KBuffer implements GPUBuffer {
   private _data: ArrayBuffer | undefined
   private _error: Error | undefined
@@ -39,7 +51,7 @@ export class KBuffer implements GPUBuffer {
     if (srcOffset !== 0 || length !== this._data!.byteLength) {
       dontKnow()
     }
-    if (!(this._usage & GPUBufferUsage.COPY_DST)) {
+    if (!(this._usage & KBufferUsage.COPY_DST)) {
       // ERROR: validation error
       debugger
     }
@@ -77,6 +89,25 @@ export class KBuffer implements GPUBuffer {
         this._monitors.push(() => resolve(this._mapRead()))
       })
     }
+  }
+
+  _isCorrect (): boolean {
+    if (this._usage & KBufferUsage.INDEX && this._usage & KBufferUsage.VERTEX) {
+      return false
+    }
+    return true
+  }
+
+  _isUniform (): boolean {
+    return !!(this._usage & KBufferUsage.UNIFORM)
+  }
+
+  _isStorage (): boolean {
+    return !!(this._usage & KBufferUsage.STORAGE)
+  }
+
+  _isReadonly () {
+    return (this._usage & KBufferUsage.MAP_READ) && !(this._usage & KBufferUsage.MAP_WRITE)
   }
 
   _mapWrite (): ArrayBuffer {

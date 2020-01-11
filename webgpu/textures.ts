@@ -1,6 +1,15 @@
 import dontKnow from './dontKnow'
 
+export const KTextureUsage = {
+  COPY_SRC: 0x01,
+  COPY_DST: 0x02,
+  SAMPLED: 0x04,
+  STORAGE: 0x08,
+  OUTPUT_ATTACHMENT: 0x10
+}
+
 export interface KTexture extends GPUTexture {
+  _getFormat(): GPUTextureFormat
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
   _getPixel (x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number
@@ -10,6 +19,8 @@ export interface KTexture extends GPUTexture {
   _getWidth (): number
   _getDepth (): number
   _getBuffer (arrayLevel: number, mipLevel: number): ArrayBuffer
+  _isSampled (): boolean
+  _isStorage (): boolean
   _flush (): void
 }
 
@@ -98,9 +109,14 @@ export class KBufferTexture implements KTexture {
 
   }
 
+  createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
+    return new KTextureView(this, descriptor)
+  }
+
   _getHeight (): number {
     return this._size.height
   }
+
   _getWidth (): number {
     return this._size.width
   }
@@ -109,8 +125,16 @@ export class KBufferTexture implements KTexture {
     return this._size.depth
   }
 
-  createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
-    return new KTextureView(this, descriptor)
+  _isSampled (): boolean {
+    return !!(this._descriptor.usage & KTextureUsage.SAMPLED)
+  }
+
+  _isStorage (): boolean {
+    return !!(this._descriptor.usage & KTextureUsage.STORAGE)
+  }
+
+  _getFormat (): GPUTextureFormat {
+    return this._descriptor.format
   }
 
   _getArrayLayerCount (): number {
@@ -214,5 +238,17 @@ export class KTextureView implements GPUTextureView {
 
   _getBuffer (): ArrayBuffer {
     return this._texture._getBuffer(this._baseArrayLayer, this._baseMipLevel)
+  }
+
+  _isSampled (): boolean {
+    return this._texture._isSampled()
+  }
+
+  _isStorage (): boolean {
+    return this._texture._isStorage()
+  }
+
+  _getFormat (): GPUTextureFormat {
+    return this._texture._getFormat()
   }
 }

@@ -24,6 +24,18 @@ export class Context2DTexture implements KTexture {
     return 1
   }
 
+  _isSampled (): boolean {
+    return false
+  }
+
+  _isStorage (): boolean {
+    return false
+  }
+
+  _getFormat (): GPUTextureFormat {
+    return 'r8unorm'
+  }
+
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
     return new KTextureView(this, descriptor)
   }

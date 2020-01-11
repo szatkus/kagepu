@@ -1,5 +1,5 @@
 import { KBuffer } from './buffers'
-import { KTexture, KBufferTexture } from './textures'
+import { KTexture, KBufferTexture, KTextureView } from './textures'
 import { KSampler } from './samplers'
 import GPUCommandEncoder from './GPUCommandEncoder'
 import { KBindGroupLayout, KBindGroup } from './bindGroups'
@@ -105,13 +105,77 @@ export class GPUDevice {
 
   createBindGroup (descriptor: GPUBindGroupDescriptor): GPUBindGroup {
     if (this._validation()) {
-      if ((descriptor.layout as KBindGroupLayout)._getBindingsCount() !== descriptor.bindings.length) {
+      let layout = descriptor.layout as KBindGroupLayout
+      if (layout._getBindingsCount() !== descriptor.bindings.length) {
         this._error = new GPUValidationError('Bindings count mismatch.')
       }
-    }
-    for (let binding of descriptor.bindings) {
-      if (binding.binding >= descriptor.bindings.length) {
-        this._error = new GPUValidationError('Incorrect binding location.')
+      for (let i = 0; i < descriptor.bindings.length; i++) {
+        let binding = descriptor.bindings[i]
+        let bindingLayout = layout._getBindings(i)
+        if (binding.binding >= descriptor.bindings.length) {
+          this._error = new GPUValidationError('Incorrect binding location.')
+        }
+        let bufferBinding = binding.resource as GPUBufferBinding
+        if (bufferBinding.buffer instanceof KBuffer) {
+          if (!bufferBinding.buffer._isCorrect()) {
+            this._error = new GPUValidationError('Buffer is messed up.')
+          }
+
+          if (bindingLayout) {
+            if (bindingLayout.type === 'uniform-buffer' && !bufferBinding.buffer._isUniform()) {
+              this._error = new GPUValidationError('Buffer is not uniform.')
+            }
+            if (bindingLayout.type === 'storage-buffer' && !bufferBinding.buffer._isStorage()) {
+              this._error = new GPUValidationError('Buffer is not storage.')
+            }
+            if (bindingLayout.type === 'readonly-storage-buffer' && !bufferBinding.buffer._isStorage() && !bufferBinding.buffer._isReadonly()) {
+              this._error = new GPUValidationError('Buffer is not correct.')
+            }
+            if (bindingLayout.type !== 'storage-buffer' && bindingLayout.type !== 'readonly-storage-buffer' && bindingLayout.type !== 'uniform-buffer') {
+              this._error = new GPUValidationError('Buffer is not a correct type.')
+            }
+          }
+
+          if ((bufferBinding.offset ?? 0) > bufferBinding.buffer._getArrayBuffer().byteLength ||
+            (bufferBinding.size ?? 0) > bufferBinding.buffer._getArrayBuffer().byteLength ||
+            (bufferBinding.offset ?? 0) + (bufferBinding.size ?? 0) > bufferBinding.buffer._getArrayBuffer().byteLength) {
+            this._error = new GPUValidationError('Offset is misaligned.')
+          }
+
+          if (!(bufferBinding.offset === undefined && bufferBinding.size === undefined) &&
+              bufferBinding.offset !== 0 && bufferBinding.size !== 0 &&
+              (bufferBinding.offset ?? 0) % (bufferBinding.size ?? 0) !== 0) {
+            this._error = new GPUValidationError('Offset is misaligned.')
+          }
+
+          if ((bufferBinding.size ?? 0) < 0) {
+            this._error = new GPUValidationError('Offset is misaligned.')
+          }
+        }
+        if (binding.resource instanceof KSampler && bindingLayout) {
+          if (bindingLayout.type !== 'sampler') {
+            this._error = new GPUValidationError('Sampler is not a correct type.')
+          }
+        }
+        if (binding.resource instanceof KTextureView && bindingLayout) {
+          if (bindingLayout.type === 'sampled-texture' && !binding.resource._isSampled()) {
+            this._error = new GPUValidationError('Texture is not sampled.')
+          }
+          if (bindingLayout.type === 'storage-texture' && !binding.resource._isStorage()) {
+            this._error = new GPUValidationError('Texture is not storage.')
+          }
+          if (bindingLayout.type !== 'sampled-texture' && bindingLayout.type !== 'storage-texture') {
+            this._error = new GPUValidationError('Texture is not a correct type.')
+          }
+          if ((bindingLayout.textureComponentType === 'float' && binding.resource._getFormat().indexOf('unorm') === -1) ||
+              (bindingLayout.textureComponentType === 'sint' && binding.resource._getFormat().indexOf('r8sint') === -1) ||
+              (bindingLayout.textureComponentType === 'uint' && binding.resource._getFormat().indexOf('r8uint') === -1)) {
+            this._error = new GPUValidationError('Incorrect format.')
+          }
+          if (binding.resource._texture._getArrayLayerCount() !== 1) {
+            this._error = new GPUValidationError('Incorrect dimensions.')
+          }
+        }
       }
     }
     return new KBindGroup(descriptor)

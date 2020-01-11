@@ -6,6 +6,8 @@ import { KRenderPassEncoder } from './render'
 import { KComputePassEncoder } from './compute'
 import { GPUShaderStage } from './shaders'
 import { KValidationError } from './errors'
+import { KBufferUsage } from './buffers'
+import { KTextureUsage } from './textures'
 
 let gpu = {
   async requestAdapter (): Promise<GPUAdapter> {
@@ -13,27 +15,11 @@ let gpu = {
   },
 
   monkeyPatch () {
-    (window as any).GPUBufferUsage = {
-      MAP_READ:  0x0001,
-      MAP_WRITE: 0x0002,
-      COPY_SRC:  0x0004,
-      COPY_DST:  0x0008,
-      INDEX:     0x0010,
-      VERTEX:    0x0020,
-      UNIFORM:   0x0040,
-      STORAGE:   0x0080,
-      INDIRECT:  0x0100
-    };
+    (window as any).GPUBufferUsage = KBufferUsage;
     // name has changed, but I leave it for near future
     (window as any).GPUShaderStageBit = GPUShaderStage;
     (window as any).GPUShaderStage = GPUShaderStage;
-    (window as any).GPUTextureUsage = {
-      COPY_SRC:          0x01,
-      COPY_DST:          0x02,
-      SAMPLED:           0x04,
-      STORAGE:           0x08,
-      OUTPUT_ATTACHMENT: 0x10
-    };
+    (window as any).GPUTextureUsage = KTextureUsage;
     (window as any).GPUValidationError = KValidationError;
     (window as any).GPUCanvasContext = GPUCanvasContext;
     (window as any).GPUDevice = GPUDevice;
