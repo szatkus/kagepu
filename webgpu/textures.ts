@@ -44,6 +44,17 @@ export function origin3DToDict (origin: GPUOrigin3D): GPUOrigin3DDict {
   }
 }
 
+export function origin2DToDict (origin: GPUOrigin2D): GPUOrigin2DDict {
+  if (origin instanceof Array) {
+    return {
+      x: origin[0],
+      y: origin[1]
+    }
+  } else {
+    return origin
+  }
+}
+
 export class KBufferTexture implements KTexture {
   _descriptor: GPUTextureDescriptor
   _buffers: Array<Array<MipMap>> = []

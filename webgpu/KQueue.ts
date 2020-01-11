@@ -6,7 +6,7 @@ import dontKnow from './dontKnow'
 import { executeShader } from '../spirv'
 import { KComputePipeline } from './compute'
 import { KFence } from './fences'
-import { extent3DToDict, origin3DToDict, KTexture, KTextureView } from './textures'
+import { extent3DToDict, origin3DToDict, KTexture, KTextureView, origin2DToDict } from './textures'
 import { colorToNumber } from './colors'
 
 export interface VertexInputs {
@@ -18,13 +18,6 @@ export interface VertexInputs {
   }[],
   builtins: number[]
 }
-
-interface GPUOrigin2DDict {
-  x: number,
-  y: number
-}
-
-type GPUOrigin2D = number[] | GPUOrigin2DDict
 
 export default class KQueue implements GPUQueue {
   _pipeline?: GPURenderPipeline | GPUComputePipeline
@@ -43,11 +36,11 @@ export default class KQueue implements GPUQueue {
     setTimeout(() => this._executeBuffers(buffers), 1)
   }
   copyImageBitmapToTexture (source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
-    let origin: GPUOrigin2DDict = (source.origin as GPUOrigin2DDict) ?? { x: 0, y: 0 }
+    let origin = origin2DToDict(source.origin ?? { x: 0, y: 0 })
     let context = document.createElement('canvas').getContext('2d')
     context!.canvas.width = source.imageBitmap.width
     context!.canvas.height = source.imageBitmap.height
-    context!.drawImage(source.imageBitmap, origin.x, origin.y)
+    context!.drawImage(source.imageBitmap, origin.x!, origin.y!)
     let imageData = context!.getImageData(0, 0, source.imageBitmap.width, source.imageBitmap.height)
     let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
     copySize = extent3DToDict(copySize)
