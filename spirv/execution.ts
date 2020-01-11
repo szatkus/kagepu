@@ -6,7 +6,7 @@ import { FunctionDeclaration, FunctionEnd } from './functions'
 import { Decorations, Binding, DescriptorSet } from './annotations'
 import { KBindGroup, KBindGroupLayout } from '../webgpu/bindGroups'
 import { Type } from './types'
-import { KShaderModule } from '../webgpu/GPUShaderModule'
+import { KShaderModule } from '../webgpu/shaders'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []

@@ -4,11 +4,11 @@ import { KSampler } from './samplers'
 import GPUCommandEncoder from './GPUCommandEncoder'
 import { KBindGroupLayout, KBindGroup } from './bindGroups'
 import KQueue from './KQueue'
-import { GPUComputePipeline } from './GPUComputePipeline'
+import { KComputePipeline } from './compute'
 import { KValidationError } from './errors'
 import { GPURenderBundleEncoder } from './GPURenderBundleEncoder'
-import { KShaderModule } from './GPUShaderModule'
-import { KRenderPipeline } from './GPURenderPassEncoder'
+import { KShaderModule } from './shaders'
+import { KRenderPipeline } from './render'
 
 export const extensions = {
   anisotropicFiltering: false
@@ -100,7 +100,7 @@ export class GPUDevice {
   }
 
   createComputePipeline (descriptor: GPUComputePipelineDescriptor): GPUComputePipeline {
-    return new GPUComputePipeline(descriptor)
+    return new KComputePipeline(descriptor)
   }
 
   createBindGroup (descriptor: GPUBindGroupDescriptor): GPUBindGroup {

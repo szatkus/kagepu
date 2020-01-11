@@ -1,11 +1,11 @@
 import { KCommandBuffer } from './GPUCommandEncoder'
-import { KCommand, KRenderPipeline } from './GPURenderPassEncoder'
+import { KCommand, KRenderPipeline } from './render'
 import { KBindGroup } from './bindGroups'
 import { KBuffer, GPUBufferSize } from './buffers'
 import dontKnow from './dontKnow'
 import { executeShader } from '../spirv'
-import { GPUComputePipeline } from './GPUComputePipeline'
-import { KFence } from './GPUFence'
+import { KComputePipeline } from './compute'
+import { KFence } from './fences'
 import { extent3DToDict, origin3DToDict, KTexture, KTextureView } from './textures'
 import { colorToNumber } from './colors'
 
@@ -174,7 +174,7 @@ export default class KQueue implements GPUQueue {
     if (arrayLayer !== 0 || mipLevel !== 0 || origin.x !== 0 || origin.y !== 0 || origin.z !== 0) {
       dontKnow()
     }
-    let destinationOrigin = origin3DToDict(destination.origin ?? {x: 0, y: 0, z: 0})
+    let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
     if (destinationOrigin !== 0) {
       dontKnow()
     }
@@ -225,7 +225,7 @@ export default class KQueue implements GPUQueue {
     buffer._unlock()
   }
   __command__dispatch (x: number, y: number, z: number) {
-    let pipeline = this._pipeline as GPUComputePipeline
+    let pipeline = this._pipeline as KComputePipeline
     let inputBuffer = new ArrayBuffer(64)
     let inputs: VertexInputs = {
       buffer: inputBuffer,

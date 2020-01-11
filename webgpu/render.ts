@@ -17,7 +17,35 @@ export class KRenderPipeline implements GPURenderPipeline {
   }
 }
 
-export class GPURenderPassEncoder {
+export class KRenderPassEncoder implements GPURenderPassEncoder {
+  public label = 'render-pass-encoder'
+  popDebugGroup (): void {
+    throw new Error('Method not implemented.')
+  }
+  pushDebugGroup (groupLabel: string): void {
+    throw new Error('Method not implemented.')
+  }
+  insertDebugMarker (markerLabel: string): void {
+    throw new Error('Method not implemented.')
+  }
+  drawIndirect (indirectBuffer: GPUBuffer, indirectOffset: number): void {
+    throw new Error('Method not implemented.')
+  }
+  drawIndexedIndirect (indirectBuffer: GPUBuffer, indirectOffset: number): void {
+    throw new Error('Method not implemented.')
+  }
+  setViewport (x: number, y: number, width: number, height: number, minDepth: number, maxDepth: number): void {
+    throw new Error('Method not implemented.')
+  }
+  setScissorRect (x: number, y: number, width: number, height: number): void {
+    throw new Error('Method not implemented.')
+  }
+  setStencilReference (reference: number): void {
+    throw new Error('Method not implemented.')
+  }
+  executeBundles (bundles: GPURenderBundle[]): void {
+    throw new Error('Method not implemented.')
+  }
 
   private _isFinished = false
   constructor (descriptor: GPURenderPassDescriptor, public _commands: Array<KCommand>) {

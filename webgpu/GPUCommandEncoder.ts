@@ -1,6 +1,6 @@
-import { GPURenderPassEncoder, KCommand } from './GPURenderPassEncoder'
+import { KRenderPassEncoder, KCommand } from './render'
 import { GPUBufferSize, KBuffer } from './buffers'
-import { GPUComputePassEncoder } from './GPUComputePassEncoder'
+import { KComputePassEncoder } from './compute'
 
 export class KCommandBuffer implements GPUCommandBuffer {
   label = 'command-buffer'
@@ -13,12 +13,12 @@ export default class GPUCommandEncoder {
 
   beginRenderPass (descriptor: GPURenderPassDescriptor): GPURenderPassEncoder {
     this._checkState()
-    return new GPURenderPassEncoder(descriptor, this._commands)
+    return new KRenderPassEncoder(descriptor, this._commands)
   }
 
   beginComputePass (descriptor: GPUComputePassDescriptor = { label: '' }): GPUComputePassEncoder {
     this._checkState()
-    return new GPUComputePassEncoder(descriptor, this._commands)
+    return new KComputePassEncoder(descriptor, this._commands)
   }
 
   finish (descriptor?: any): GPUCommandBuffer {

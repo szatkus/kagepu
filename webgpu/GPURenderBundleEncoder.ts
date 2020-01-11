@@ -1,4 +1,4 @@
-import { KCommand } from './GPURenderPassEncoder'
+import { KCommand } from './render'
 import dontKnow from './dontKnow'
 
 export class GPURenderBundleEncoder {

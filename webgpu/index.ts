@@ -2,9 +2,9 @@
 
 import { GPUCanvasContext } from './canvas'
 import { GPUDevice, GPUAdapter } from './device'
-import { GPURenderPassEncoder } from './GPURenderPassEncoder'
-import { GPUComputePassEncoder } from './GPUComputePassEncoder'
-import { GPUShaderStage } from './GPUShaderModule'
+import { KRenderPassEncoder } from './render'
+import { KComputePassEncoder } from './compute'
+import { GPUShaderStage } from './shaders'
 import { KValidationError } from './errors'
 
 let gpu = {
@@ -37,8 +37,8 @@ let gpu = {
     (window as any).GPUValidationError = KValidationError;
     (window as any).GPUCanvasContext = GPUCanvasContext;
     (window as any).GPUDevice = GPUDevice;
-    (window as any).GPURenderPassEncoder = GPURenderPassEncoder;
-    (window as any).GPUComputePassEncoder = GPUComputePassEncoder;
+    (window as any).GPURenderPassEncoder = KRenderPassEncoder;
+    (window as any).GPUComputePassEncoder = KComputePassEncoder;
     (window.navigator as any).gpu = gpu
 
     let originalGetContext = HTMLCanvasElement.prototype.getContext;
