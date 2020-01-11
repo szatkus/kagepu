@@ -91,6 +91,23 @@ export class GPUDevice {
   }
 
   createPipelineLayout (descriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout {
+    if (this._validation()) {
+      let storageBuffers = 0
+      let uniformBuffers = 0
+      for (let layout of descriptor.bindGroupLayouts as KBindGroupLayout[]) {
+        storageBuffers += layout._getBindingsByType('storage-buffer').length
+        uniformBuffers += layout._getBindingsByType('uniform-buffer').length
+      }
+      if (storageBuffers > 4) {
+        this._error = new GPUValidationError('Too many storage buffers.')
+      }
+      if (uniformBuffers > 8) {
+        this._error = new GPUValidationError('Too many uniform buffers.')
+      }
+      if (descriptor.bindGroupLayouts.length > 4) {
+        this._error = new GPUValidationError('Too many bind group layouts.')
+      }
+    }
     return new KPipelineLayout(descriptor)
   }
 

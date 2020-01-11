@@ -16,7 +16,7 @@ export class KBindGroupLayout implements GPUBindGroupLayout {
     }
   }
 
-  _getBindingsByType (type: String): number[] {
+  _getBindingsByType (type: GPUBindingType): number[] {
     return (this._descriptor.bindings ?? []).filter(binding => binding.type === type).map(binding => binding.binding)
   }
 
