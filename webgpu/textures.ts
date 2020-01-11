@@ -9,7 +9,7 @@ export const KTextureUsage = {
 }
 
 export interface KTexture extends GPUTexture {
-  _getFormat(): GPUTextureFormat
+  _getFormat (): GPUTextureFormat
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
   _getPixel (x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number

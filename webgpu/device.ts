@@ -28,12 +28,13 @@ export class KPipelineLayout implements GPUPipelineLayout {
 export class GPUDevice {
   public extensions = extensions
   public limit = limits
-  public adapter: GPUAdapter
   public defaultQueue = new KQueue()
   private _errorReporter = new ErrorReporter()
 
-  constructor (adapter: GPUAdapter) {
-    this.adapter = adapter
+  constructor (private _adapter: GPUAdapter) {
+    if (this._adapter._brutal) {
+      this._errorReporter.enableBrutalMode()
+    }
   }
 
   createBuffer (descriptor: GPUBufferDescriptor): GPUBuffer {
@@ -124,7 +125,7 @@ export class GPUDevice {
         this._errorReporter.createValidationError('At least one color state is required.')
       }
       for (let colorState of descriptor.colorStates) {
-        if (colorState.format === 'r8snorm' || colorState.format === 'rg8snorm' || colorState.format === 'rgba8snorm' || colorState.format === 'rg11b10float' || 
+        if (colorState.format === 'r8snorm' || colorState.format === 'rg8snorm' || colorState.format === 'rgba8snorm' || colorState.format === 'rg11b10float' ||
             colorState.format === 'depth32float' || colorState.format === 'depth24plus' || colorState.format === 'depth24plus-stencil8') {
           this._errorReporter.createValidationError('Color format is not renderable.')
         }
@@ -264,8 +265,10 @@ export class GPUDevice {
 }
 
 export class GPUAdapter {
-  name = 'kagegpu'
-  extensions = extensions
+  public name = 'kagegpu'
+  public extensions = extensions
+
+  constructor (public _brutal: boolean) {}
 
   async requestDevice (): Promise<GPUDevice> {
     return new GPUDevice(this)

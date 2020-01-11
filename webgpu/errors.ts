@@ -9,10 +9,14 @@ export class KOutOfMemoryError implements GPUOutOfMemoryError {
 
 export class ErrorReporter {
   private error?: GPUError
-  filter: GPUErrorFilter = 'none'
+  private filter: GPUErrorFilter = 'none'
+  private brutal = false
 
   createValidationError (message: string) {
     this.error = new GPUValidationError(message)
+    if (this.brutal) {
+      throw this.error
+    }
   }
 
   // TODO: OOM errors
@@ -28,6 +32,10 @@ export class ErrorReporter {
   }
 
   validation (): boolean {
-    return this.filter === 'validation'
+    return this.filter === 'validation' || this.brutal
+  }
+
+  enableBrutalMode () {
+    this.brutal = true
   }
 }

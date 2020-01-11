@@ -10,11 +10,14 @@ import { KBufferUsage } from './buffers'
 import { KTextureUsage } from './textures'
 
 let gpu = {
+  brutal: false,
+
   async requestAdapter (): Promise<GPUAdapter> {
-    return new GPUAdapter()
+    return new GPUAdapter(this.brutal)
   },
 
-  monkeyPatch () {
+  monkeyPatch (options = { brutal: false }) {
+    this.brutal = options.brutal;
     (window as any).GPUBufferUsage = KBufferUsage;
     // name has changed, but I leave it for near future
     (window as any).GPUShaderStageBit = GPUShaderStage;
