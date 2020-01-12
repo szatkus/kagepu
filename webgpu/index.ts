@@ -28,6 +28,8 @@ let gpu = {
     (window as any).GPUDevice = GPUDevice;
     (window as any).GPURenderPassEncoder = KRenderPassEncoder;
     (window as any).GPUComputePassEncoder = KComputePassEncoder;
+    // I couldn't find any way to superclass the Event class, so here we go...
+    (window as any).GPUUncapturedErrorEvent = CustomEvent;
     (window.navigator as any).gpu = gpu
 
     let originalGetContext = HTMLCanvasElement.prototype.getContext;

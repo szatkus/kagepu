@@ -7,7 +7,8 @@ export class KCommandBuffer implements GPUCommandBuffer {
   constructor (public _commands: KCommand[]) {}
 }
 
-export default class GPUCommandEncoder {
+export default class KCommandEncoder implements GPUCommandEncoder {
+  public label = 'command-encoder'
   private _isFinished = false
   private _commands: Array<KCommand> = []
 
@@ -65,6 +66,16 @@ export default class GPUCommandEncoder {
       name: 'copyTextureToTexture',
       args: [source, destination, copySize]
     })
+  }
+
+  popDebugGroup (): void {
+    throw new Error('Method not implemented.')
+  }
+  pushDebugGroup (groupLabel: string): void {
+    throw new Error('Method not implemented.')
+  }
+  insertDebugMarker (markerLabel: string): void {
+    throw new Error('Method not implemented.')
   }
 
   _checkState () {

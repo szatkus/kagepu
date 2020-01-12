@@ -8,6 +8,7 @@ import { KComputePipeline } from './compute'
 import { KFence } from './fences'
 import { extent3DToDict, origin3DToDict, KTexture, KTextureView, origin2DToDict } from './textures'
 import { colorToNumber } from './colors'
+import { ErrorReporter } from './errors'
 
 export interface VertexInputs {
   buffer: ArrayBuffer,
@@ -23,18 +24,32 @@ export default class KQueue implements GPUQueue {
   _pipeline?: GPURenderPipeline | GPUComputePipeline
   _indexBuffer = new ArrayBuffer(64)
   _vertexBuffers: ArrayBuffer[] = []
-  _passDescriptor?: GPURenderPassDescriptor | GPUComputePassDescriptor
-  _bindGroups: KBindGroup[] = []
+  private _passDescriptor?: GPURenderPassDescriptor | GPUComputePassDescriptor
+  private _working = false
+  private _buffers: KCommandBuffer[] = []
+  private _bindGroups: KBindGroup[] = []
   public label = 'queue'
+
+  constructor (private _errorReporter: ErrorReporter) {}
+
   createFence (descriptor: GPUFenceDescriptor = {}): GPUFence {
     return new KFence(descriptor)
   }
+
   signal (fence: KFence, signalValue: number) {
     fence._value = signalValue
   }
+
   submit (buffers: KCommandBuffer[]) {
-    setTimeout(() => this._executeBuffers(buffers), 1)
+    if (!this._working) {
+      this._buffers = buffers
+      this._working = true
+      setTimeout(() => this._executeBuffers(), 1)
+    } else {
+      this._buffers = this._buffers.concat(buffers)
+    }
   }
+
   copyImageBitmapToTexture (source: GPUImageBitmapCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     let origin = origin2DToDict(source.origin ?? { x: 0, y: 0 })
     let context = document.createElement('canvas').getContext('2d')
@@ -44,12 +59,16 @@ export default class KQueue implements GPUQueue {
     let imageData = context!.getImageData(0, 0, source.imageBitmap.width, source.imageBitmap.height)
     let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
     copySize = extent3DToDict(copySize)
+    let texture = destination.texture as KTexture
+    if (this._errorReporter.validation() && texture._isDestroyed()) {
+      this._errorReporter.createValidationError('Texture is destroyed.')
+    }
     for (let x = 0; x < copySize.width; x++) {
       for (let y = 0; y < copySize.height; y++) {
         for (let z = 0; z < copySize.depth; z++) {
           let offset = (y * imageData.width + x) * 4
-          let pixel = imageData.data[offset] + imageData.data[offset + 1] * 0x100 + imageData.data[offset + 2] * 0x10000 + imageData.data[offset + 3] * 0x1000000;
-          (destination.texture as KTexture)._putPixel(pixel,
+          let pixel = imageData.data[offset] + imageData.data[offset + 1] * 0x100 + imageData.data[offset + 2] * 0x10000 + imageData.data[offset + 3] * 0x1000000
+          texture._putPixel(pixel,
             x + (destinationOrigin.x ?? 0),
             y + (destinationOrigin.y ?? 0),
             z + (destinationOrigin.z ?? 0),
@@ -60,13 +79,16 @@ export default class KQueue implements GPUQueue {
       }
     }
   }
-  async _executeBuffers (buffers: KCommandBuffer[]) {
-    for (let commandBuffer of buffers) {
+
+  async _executeBuffers () {
+    for (let commandBuffer of this._buffers) {
       for (let command of commandBuffer._commands) {
         await this._executeCommand(command)
       }
     }
+    this._working = false
   }
+
   async _executeCommand (command: KCommand) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -79,28 +101,37 @@ export default class KQueue implements GPUQueue {
         }
       }, 1)
     })
-
   }
+
   __command__setDescriptor (descriptor: GPURenderPassDescriptor | GPUComputePassDescriptor) {
     let defaultColor = { r: 0, b: 0, g: 0, a: 1 }
     let renderPassDescriptor = descriptor as GPURenderPassDescriptor
     for (let attachment of renderPassDescriptor.colorAttachments || []) {
-      clear((attachment.attachment as KTextureView)._texture, (attachment.loadValue as GPUColor) || defaultColor)
+      let texture = (attachment.attachment as KTextureView)._texture
+      clear(texture, (attachment.loadValue as GPUColor) || defaultColor)
+      if (this._errorReporter.validation() && texture._isDestroyed()) {
+        this._errorReporter.createValidationError('Texture is destroyed.')
+      }
     }
     this._passDescriptor = descriptor
   }
+
   __command__setPipeline (pipeline: GPURenderPipeline) {
     this._pipeline = pipeline
   }
+
   __command__setIndexBuffer (buffer: KBuffer, offset: number) {
     this._indexBuffer = buffer._getArrayBuffer().slice(offset)
   }
+
   __command__setVertexBuffer (slot: number, buffer: KBuffer, offset: number) {
     this._vertexBuffers[slot] = buffer._getArrayBuffer().slice(offset)
   }
+
   __command__setBindGroup (index: number, bindGroup: KBindGroup, dynamicOffsets?: Array<number>) {
     this._bindGroups[index] = bindGroup
   }
+
   __command__copyBufferToBuffer (source: KBuffer, sourceOffset: GPUBufferSize, destination: KBuffer, destinationOffset: GPUBufferSize, size: GPUBufferSize) {
     let sourceView = new Uint8Array(source._mapWrite())
     let destinationView = new Uint8Array(destination._mapWrite())
@@ -110,6 +141,7 @@ export default class KQueue implements GPUQueue {
     source._unlock()
     destination._unlock()
   }
+
   __command__copyBufferToTexture (source: GPUBufferCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     source = {
       ...{
@@ -145,6 +177,9 @@ export default class KQueue implements GPUQueue {
     let buffer = source.buffer as KBuffer
     let texture = destination.texture as KTexture
     let view = buffer._getArray(texture._getPixelSize())
+    if (this._errorReporter.validation() && texture._isDestroyed()) {
+      this._errorReporter.createValidationError('Texture is destroyed.')
+    }
     for (let x = 0; x < copySize.width; x++) {
       for (let y = 0; y < copySize.height; y++) {
         for (let z = 0; z < copySize.depth; z++) {
@@ -155,6 +190,7 @@ export default class KQueue implements GPUQueue {
     }
     buffer._unlock()
   }
+
   __command__copyTextureToTexture (source: GPUTextureCopyView, destination: GPUTextureCopyView, copySize: GPUExtent3D) {
     let arrayLayer = source.arrayLayer || 0
     let mipLevel = source.mipLevel || 0
@@ -168,22 +204,28 @@ export default class KQueue implements GPUQueue {
       dontKnow()
     }
     let destinationOrigin = origin3DToDict(destination.origin ?? { x: 0, y: 0, z: 0 })
-    if (destinationOrigin !== 0) {
+    if (destinationOrigin.x !== 0 || destinationOrigin.y !== 0 || destinationOrigin.z !== 0) {
       dontKnow()
     }
     copySize = extent3DToDict(copySize)
     if (!copySize.width || !copySize.height || !copySize.depth) {
       dontKnow()
     }
+    let sourceTexture = source.texture as KTexture
+    let destinationTexture = destination.texture as KTexture
+    if (this._errorReporter.validation() && (sourceTexture._isDestroyed() || destinationTexture._isDestroyed())) {
+      this._errorReporter.createValidationError('Texture is destroyed.')
+    }
     for (let x = 0; x < copySize.width; x++) {
       for (let y = 0; y < copySize.height; y++) {
         for (let z = 0; z < copySize.depth; z++) {
-          let pixel = (source.texture as KTexture)._getPixel(x, y, z, arrayLayer, mipLevel);
-          (destination.texture as KTexture)._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
+          let pixel = sourceTexture._getPixel(x, y, z, arrayLayer, mipLevel)
+          destinationTexture._putPixel(pixel, x, y, z, destination.arrayLayer!, destination.mipLevel!)
         }
       }
     }
   }
+
   __command__copyTextureToBuffer (source: GPUTextureCopyView, destination: GPUBufferCopyView, copySize: GPUExtent3D) {
     let arrayLayer = source.arrayLayer || 0
     let mipLevel = source.mipLevel || 0
@@ -206,6 +248,9 @@ export default class KQueue implements GPUQueue {
     let buffer = destination.buffer as KBuffer
     let texture = source.texture as KTexture
     let view = buffer._getArray(texture._getPixelSize())
+    if (this._errorReporter.validation() && texture._isDestroyed()) {
+      this._errorReporter.createValidationError('Texture is destroyed.')
+    }
     for (let x = 0; x < copySize.width; x++) {
       for (let y = 0; y < copySize.height; y++) {
         for (let z = 0; z < copySize.depth; z++) {
@@ -217,6 +262,7 @@ export default class KQueue implements GPUQueue {
     }
     buffer._unlock()
   }
+
   __command__dispatch (x: number, y: number, z: number) {
     let pipeline = this._pipeline as KComputePipeline
     let inputBuffer = new ArrayBuffer(64)
@@ -228,6 +274,7 @@ export default class KQueue implements GPUQueue {
     }
     executeComputeShader(pipeline._descriptor.computeStage, inputs)
   }
+
   __command__draw (vertexCount: number, instanceCount: number, firstVertex: number, firstInstance: number) {
     let passDescriptor = this._passDescriptor! as GPURenderPassDescriptor
     let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as KRenderPipeline
@@ -299,6 +346,7 @@ export default class KQueue implements GPUQueue {
       output._flush()
     }
   }
+
   __command__drawIndexed (indexCount: number, instanceCount: number, firstIndex: number, baseVertex: number, firstInstance: number) {
     let pipeline = (this._pipeline ? this._pipeline : dontKnow()) as KRenderPipeline
 

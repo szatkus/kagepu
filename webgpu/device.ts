@@ -1,5 +1,5 @@
 import { KBuffer } from './buffers'
-import { KTexture, KBufferTexture, KTextureView } from './textures'
+import { KTexture, KBufferTexture, KTextureView, extent3DToDict } from './textures'
 import { KSampler } from './samplers'
 import GPUCommandEncoder from './GPUCommandEncoder'
 import { KBindGroupLayout, KBindGroup } from './bindGroups'
@@ -28,17 +28,21 @@ export class KPipelineLayout implements GPUPipelineLayout {
 export class GPUDevice {
   public extensions = extensions
   public limit = limits
-  public defaultQueue = new KQueue()
   private _errorReporter = new ErrorReporter()
+  public defaultQueue = new KQueue(this._errorReporter)
 
-  constructor (private _adapter: GPUAdapter) {
-    if (this._adapter._brutal) {
+  constructor (public adapter: GPUAdapter) {
+    if (this.adapter._brutal) {
       this._errorReporter.enableBrutalMode()
     }
   }
 
   createBuffer (descriptor: GPUBufferDescriptor): GPUBuffer {
-    return new KBuffer(descriptor)
+    let buffer = new KBuffer(descriptor)
+    if (!buffer._isCorrect()) {
+      this._errorReporter.createValidationError('Incorrect buffer.')
+    }
+    return buffer
   }
 
   createBufferMapped (descriptor: GPUBufferDescriptor): [GPUBuffer, ArrayBuffer] {
@@ -54,6 +58,25 @@ export class GPUDevice {
   }
 
   createTexture (descriptor: GPUTextureDescriptor): GPUTexture {
+    if (this._errorReporter.validation()) {
+      if (descriptor.sampleCount !== undefined && descriptor.sampleCount !== 1 && descriptor.sampleCount !== 4) {
+        this._errorReporter.createValidationError('Sample count is incorrect.')
+      }
+      if (descriptor.sampleCount === 4 && (descriptor.mipLevelCount ?? 1) > 1) {
+        this._errorReporter.createValidationError('Mipmap is not supported when texture is sampled.')
+      }
+      if (descriptor.mipLevelCount === 0) {
+        this._errorReporter.createValidationError('Mipmap level of 0 is not allowed.')
+      }
+      // let maxMipmapSize = Math.pow(2, (descriptor.mipLevelCount ?? 1) - 1)
+      // let size = extent3DToDict(descriptor.size)
+      // if (maxMipmapSize > size.width || maxMipmapSize > size.height) {
+      //   this._errorReporter.createValidationError('Too high level of mipmap.')
+      // }
+      if (descriptor.format === 'r8snorm' || descriptor.format === 'rg8snorm' || descriptor.format === 'rgba8snorm' || descriptor.format === 'rg11b10float') {
+        this._errorReporter.createValidationError('Color format is not renderable.')
+      }
+    }
     return new KBufferTexture(descriptor)
   }
 
@@ -118,7 +141,7 @@ export class GPUDevice {
 
   createRenderPipeline (descriptor: GPURenderPipelineDescriptor): GPURenderPipeline {
     if (this._errorReporter.validation()) {
-      if (descriptor.sampleCount !== 1 && descriptor.sampleCount !== 4) {
+      if (descriptor.sampleCount !== undefined && descriptor.sampleCount !== 1 && descriptor.sampleCount !== 4) {
         this._errorReporter.createValidationError('Sample count is incorrect.')
       }
       if (!descriptor.depthStencilState && descriptor.colorStates.length === 0) {
@@ -253,6 +276,10 @@ export class GPUDevice {
 
   async popErrorScope (): Promise<GPUError | null> {
     return this._errorReporter.popErrorScope()
+  }
+
+  addEventListener (eventName: string, listener: Function, options: any) {
+    this._errorReporter.addEventListener(eventName, listener, options)
   }
 
   /*
