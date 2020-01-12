@@ -7,6 +7,7 @@ import { Decorations, Binding, DescriptorSet } from './annotations'
 import { KBindGroup, KBindGroupLayout } from '../webgpu/bindGroups'
 import { Type } from './types'
 import { KShaderModule } from '../webgpu/shaders'
+import { KBuffer } from '../webgpu/buffers'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -148,17 +149,16 @@ class StorageBufferMemory extends Memory {
   createVariable (type: Type, resultId: number): Pointer {
     let binding: Binding = this.decorations.getSingleDecoration(resultId, Binding)
     let descriptorSet: DescriptorSet = this.decorations.getSingleDecoration(resultId, DescriptorSet)
-    return dontKnow()
-    // let validBindings = (this.inputs.bindGroups[descriptorSet.value]._descriptor.layout as KBindGroupLayout)._getBindingsByType('storage-buffer')
-    // if (validBindings.indexOf(binding.value) === -1) {
-    //   dontKnow()
-    // }
-    // let perfectBinding = this.inputs.bindGroups[descriptorSet.value]._descriptor.bindings.filter((g: GPUBindGroupBinding) => g.binding === binding.value)[0]
-    // let buffer = perfectBinding.resource as GPUBufferBinding
-    // if (!buffer.buffer || buffer.offset! > 0) {
-    //   dontKnow()
-    // }
-    // return new Pointer((buffer.buffer as KBuffer)._useAsMemory(), 0, type)
+    let validBindings = (this.inputs.bindGroups[descriptorSet.value]._descriptor.layout as KBindGroupLayout)._getBindingsByType('storage-buffer')
+    if (validBindings.indexOf(binding.value) === -1) {
+      dontKnow()
+    }
+    let perfectBinding = this.inputs.bindGroups[descriptorSet.value]._descriptor.bindings.filter((g: GPUBindGroupBinding) => g.binding === binding.value)[0]
+    let buffer = perfectBinding.resource as GPUBufferBinding
+    if (!buffer.buffer || buffer.offset! > 0) {
+      dontKnow()
+    }
+    return new Pointer((buffer.buffer as KBuffer)._useAsMemory(), 0, type)
   }
 }
 
