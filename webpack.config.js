@@ -4,6 +4,11 @@ module.exports = {
   module: {
     rules: [
       {
+        enforce: 'pre',
+        use: 'tslint-loader',
+        exclude: /node_modules/
+      },
+      {
         use: 'ts-loader',
         exclude: /node_modules/
       }
