@@ -64,7 +64,7 @@ export class KBuffer implements GPUBuffer {
       debugger
     }
     // TODO: alignment
-    let input = new Uint8Array(data.buffer)
+    let input = new Uint8Array(data.buffer || data)
     let output = new Uint8Array(this._data!)
     for (let i = 0; i < data.byteLength; i++) {
       output[offset + i] = input[i]

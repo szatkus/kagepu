@@ -7,6 +7,7 @@ import { Decorations, Location, DescriptorSet, Binding, Builtin } from './annota
 import { KTextureView } from '../webgpu/textures'
 import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from '../imi'
 import { KBuffer } from '../webgpu/buffers'
+import { KSampler } from '../webgpu/samplers'
 
 export class Pointer {
   constructor (public memory: Memory, public address: number, public type: Type, private object: any = {}) {
@@ -224,7 +225,7 @@ export class InputMemory extends Memory {
         let buffer = binding.resource._getBuffer()
         return new Pointer(new Memory(buffer), 0, new TypeArray(type, buffer.byteLength), binding.resource)
       }
-      if (binding.resource instanceof GPUSampler) {
+      if (binding.resource instanceof KSampler) {
         return new Pointer(new Memory(new ArrayBuffer(0)), 0, type, binding.resource)
       }
     }

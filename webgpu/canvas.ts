@@ -2,6 +2,7 @@ import { KTexture, KTextureView } from './textures'
 
 export class Context2DTexture implements KTexture {
   private _imageData?: ImageData
+  private _destored = false
   public label = 'texture'
 
   constructor (public _context: CanvasRenderingContext2D, public _descriptor: GPUSwapChainDescriptor) {
@@ -9,7 +10,8 @@ export class Context2DTexture implements KTexture {
   }
 
   destroy (): void {
-    throw new Error('Method not implemented.')
+    delete this._imageData
+    this._destored = true
   }
 
   _getHeight (): number {
@@ -34,6 +36,10 @@ export class Context2DTexture implements KTexture {
 
   _getFormat (): GPUTextureFormat {
     return 'r8unorm'
+  }
+
+  _isDestroyed (): boolean {
+    return this._destored
   }
 
   createView (descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {

@@ -21,6 +21,7 @@ export interface KTexture extends GPUTexture {
   _getBuffer (arrayLevel: number, mipLevel: number): ArrayBuffer
   _isSampled (): boolean
   _isStorage (): boolean
+  _isDestroyed (): boolean
   _flush (): void
 }
 
@@ -67,11 +68,12 @@ export function origin2DToDict (origin: GPUOrigin2D): GPUOrigin2DDict {
 }
 
 export class KBufferTexture implements KTexture {
-  _descriptor: GPUTextureDescriptor
-  _buffers: Array<Array<MipMap>> = []
-  _mipLevelCount: number
-  _size: GPUExtent3DDict
-  label = 'texture'
+  private _descriptor: GPUTextureDescriptor
+  private _buffers: Array<Array<MipMap>> = []
+  private _mipLevelCount: number
+  private _size: GPUExtent3DDict
+  private _destored = false
+  public label = 'texture'
 
   constructor (descriptor: GPUTextureDescriptor) {
     this._descriptor = {...{
@@ -113,6 +115,10 @@ export class KBufferTexture implements KTexture {
     return new KTextureView(this, descriptor)
   }
 
+  destroy () {
+    this._destored = true
+  }
+
   _getHeight (): number {
     return this._size.height
   }
@@ -135,6 +141,10 @@ export class KBufferTexture implements KTexture {
 
   _getFormat (): GPUTextureFormat {
     return this._descriptor.format
+  }
+
+  _isDestroyed (): boolean {
+    return this._destored
   }
 
   _getArrayLayerCount (): number {
@@ -223,7 +233,6 @@ export class KBufferTexture implements KTexture {
 
   _flush (): void {}
 
-  destroy () {}
 }
 
 export class KTextureView implements GPUTextureView {
