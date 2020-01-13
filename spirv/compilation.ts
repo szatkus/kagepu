@@ -1,6 +1,5 @@
 import { compile as debugCompile } from './debug'
 import { compile as annotationsCompile, Decorations } from './annotations'
-import { compile as extensionsCompile } from './extensions'
 import { compile as modeSettingCompile } from './mode'
 import { compile as typeSettingCompile } from './types'
 import { compile as constantsCompile } from './constants'
@@ -13,6 +12,7 @@ import { compile as vectorsCompile } from './vectors'
 import { compile as additionCompile } from './addition'
 import compiler from './compiler'
 import './images/'
+import './extensions/'
 import { ImiOp } from '../imi'
 
 export type CodeStream = Uint32Array
@@ -82,11 +82,10 @@ export function compile (code: CodeStream) {
       state.endPos = state.startPos + state.wordCount
       state.pos++
       let imiOps = module.ops.length
-            // instructions are grouped in the same way as in the specification
-            // https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html#_a_id_instructions_a_instructions
+      // instructions are grouped in the same way as in the specification
+      // https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html#_a_id_instructions_a_instructions
       debugCompile(state, module)
       annotationsCompile(state, module)
-      extensionsCompile(state, module)
       modeSettingCompile(state, module)
       typeSettingCompile(state, module)
       constantsCompile(state, module)
