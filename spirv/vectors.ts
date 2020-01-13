@@ -1,7 +1,7 @@
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
 import dontKnow from './dontKnow'
-import { Pointer, Memory } from './memory'
+import { Pointer, Memory } from './_memory'
 import { TypeVector, TypeFloat } from './types'
 
 export function compile (state: CompilationState, module: CompiledModule) {

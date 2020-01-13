@@ -1,7 +1,7 @@
 import { Type, TypeInt, TypeStruct } from '../spirv/types'
 import { CompiledModule } from '../spirv/compilation'
 import dontKnow from './dontKnow'
-import { DescriptorSet, Binding } from '../spirv/annotations'
+import { DescriptorSet, Binding } from '../spirv/decorations'
 import { VertexInputs } from '../webgpu/KQueue'
 
 type ImiId = number
@@ -25,6 +25,28 @@ export class ImiString extends ImiOp {
     stack.push(this.value)
     return []
   }
+
+}
+
+export class ImiObject extends ImiOp {
+  constructor (public value: any) {
+    super()
+  }
+}
+
+export class ImiConstant extends ImiOp {
+  constructor (public value: any) {
+    super()
+  }
+}
+
+export class ImiComposite extends ImiOp {
+  constructor () {
+    super()
+  }
+}
+
+export class ImiLabel extends ImiOp {
 
 }
 
@@ -204,6 +226,16 @@ export class ImiGetIndex extends ImiOp {
     })
     return []
   }
+
+}
+
+export class ImiSetIndex extends ImiOp {
+  
+
+}
+
+export class ImiSwap extends ImiOp {
+  
 
 }
 

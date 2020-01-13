@@ -1,19 +1,17 @@
-import { compile as debugCompile } from './debug'
-import { compile as annotationsCompile, Decorations } from './annotations'
-import { compile as modeSettingCompile } from './mode'
-import { compile as typeSettingCompile } from './types'
-import { compile as constantsCompile } from './constants'
-import { compile as memoryCompile } from './memory'
-import { compile as functionsCompile, FunctionEnd } from './functions'
-import { compile as compositesCompile } from './composites'
-import { compile as controlFlowCompile } from './controlFlow'
-import { compile as multiplicationCompile } from './multiplication'
-import { compile as vectorsCompile } from './vectors'
-import { compile as additionCompile } from './addition'
 import compiler from './compiler'
-import './images/'
-import './extensions/'
+import './annotations'
+import './composites'
+import './constants'
+import './controlFlow'
+import './debug'
+import './extensions'
+import './functions'
+import './images'
+import './memory'
+import './mode'
 import { ImiOp } from '../imi'
+import { Decorations } from './decorations'
+import { FunctionEnd } from './_functions'
 
 export type CodeStream = Uint32Array
 
@@ -81,28 +79,8 @@ export function compile (code: CodeStream) {
       state.startPos = state.pos
       state.endPos = state.startPos + state.wordCount
       state.pos++
-      let imiOps = module.ops.length
-      // instructions are grouped in the same way as in the specification
-      // https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html#_a_id_instructions_a_instructions
-      debugCompile(state, module)
-      annotationsCompile(state, module)
-      modeSettingCompile(state, module)
-      typeSettingCompile(state, module)
-      constantsCompile(state, module)
-      memoryCompile(state, module)
-      functionsCompile(state, module)
-      compositesCompile(state, module)
-      controlFlowCompile(state, module)
-      multiplicationCompile(state, module)
-      vectorsCompile(state, module)
-      additionCompile(state, module)
 
-      if (compiler.handleInstruction(state.opCode, state, module)) {
-        state.processed = true
-      }
-
-            // processing an instruction should change state of the program counter, otherwise it means that instruction is not supported
-      if (imiOps >= module.ops.length) {
+      if (!compiler.handleInstruction(state.opCode, state, module)) {
         console.debug(code[state.pos])
         console.debug(code[state.pos + 1])
         console.debug(code[state.pos + 2])

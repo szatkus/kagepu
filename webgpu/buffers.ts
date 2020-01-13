@@ -1,5 +1,5 @@
 import dontKnow from './dontKnow'
-import { Memory } from '../spirv/memory'
+import { Memory } from '../spirv/_memory'
 
 export type GPUBufferSize = number
 

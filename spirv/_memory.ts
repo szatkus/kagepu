@@ -3,11 +3,11 @@ import { Type, TypeInt, TypeVector, TypeArray, TypeStruct, TypePointer, TypeMatr
 import { CompilationState, CompiledModule } from './compilation'
 import { Execution } from './execution'
 import { VertexInputs } from '../webgpu/KQueue'
-import { Decorations, Location, DescriptorSet, Binding, Builtin } from './annotations'
 import { KTextureView } from '../webgpu/textures'
-import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiPointerWrite, ImiLoad, ImiStore } from '../imi'
+import { ImiPut, ImiGet, ImiPointerType, ImiCreateVariable, ImiGetIndex, ImiLoad, ImiStore } from '../imi'
 import { KBuffer } from '../webgpu/buffers'
 import { KSampler } from '../webgpu/samplers'
+import { Decorations, DescriptorSet, Binding, Builtin, Location } from './decorations'
 
 export class Pointer {
   constructor (public memory: Memory, public address: number, public type: Type, private object: any = {}) {
@@ -255,117 +255,4 @@ export class ConstantMemory extends Memory {
 
 export class ConstantComposite {
   constructor (public type: Type, public constituents: number[]) {}
-}
-
-export function compile (state: CompilationState, module: CompiledModule) {
-  function getData (object: any, execution: Execution): number[] {
-    let result: number[] = []
-    if (object instanceof ConstantComposite) {
-      for (let c of object.constituents) {
-        result = result.concat(getData(execution.get(c), execution))
-      }
-      return result
-    }
-    if (object instanceof Pointer) {
-      return object.read()
-    }
-    dontKnow()
-    return []
-  }
-  switch (state.opCode) {
-        // OpVariable
-    case 59:
-      {
-        if (state.wordCount > 4) dontKnow()
-        let typeId = state.consumeWord()
-        let resultId = state.consumeWord()
-        let storageClass = state.consumeWord()
-        let initializerId = state.pos < state.endPos ? state.consumeWord() : 0
-        module.flow.push((execution: Execution) => {
-          let pointerType = execution.get(typeId) as TypePointer
-          let type = pointerType.type
-          let pointer = execution.getMemorySubsystem(storageClass).createVariable(type, resultId)
-          if (initializerId !== 0) {
-            let initializer = execution.get(initializerId)
-            dontKnow()
-          }
-          execution.put(resultId, pointer)
-        })
-        module.ops.push(new ImiGet(typeId))
-        module.ops.push(new ImiPointerType())
-        module.ops.push(new ImiCreateVariable(storageClass, resultId))
-        if (initializerId !== 0) {
-          dontKnow()
-        }
-        module.ops.push(new ImiPut(resultId))
-        console.debug(`$${resultId} = OpVariable $${typeId} ${storageClass}`)
-        state.processed = true
-      }
-      break
-        // OpLoad
-    case 61:
-      {
-        if (state.wordCount > 4) dontKnow()
-        let typeId = state.consumeWord()
-        let resultId = state.consumeWord()
-        let loadId = state.consumeWord()
-        module.flow.push((execution: Execution) => {
-          let type = execution.get(typeId) as Type
-          execution.put(resultId, execution.get(loadId))
-        })
-        module.ops.push(new ImiGet(typeId))
-        module.ops.push(new ImiGet(loadId))
-        module.ops.push(new ImiLoad())
-        module.ops.push(new ImiPut(resultId))
-        console.debug(`$${resultId} = OpLoad $${typeId} $${loadId}`)
-        state.processed = true
-      }
-      break
-        // OpStore
-    case 62:
-      {
-        if (state.wordCount > 4) dontKnow()
-        let pointerId = state.consumeWord()
-        let objectId = state.consumeWord()
-        module.flow.push((execution: Execution) => {
-          let pointer = execution.get(pointerId)
-          let object = execution.get(objectId)
-          let data = getData(object, execution)
-          pointer.write(data)
-        })
-        module.ops.push(new ImiGet(pointerId))
-        module.ops.push(new ImiGet(objectId))
-        module.ops.push(new ImiStore())
-        console.debug(`OpStore $${pointerId} $${objectId}`)
-        state.processed = true
-      }
-      break
-        // OpAccessChain
-    case 65:
-      {
-        let typeId = state.consumeWord()
-        let resultId = state.consumeWord()
-        let baseId = state.consumeWord()
-        let indexes = state.consumeArray()
-        module.flow.push((execution: Execution) => {
-          let type = execution.get(typeId) as TypePointer
-          let base = execution.get(baseId)
-          indexes.forEach(i => {
-            let index = execution.get(i).readValue()
-            base = base.getIndex(index)
-          })
-          execution.put(resultId, base)
-        })
-        module.ops.push(new ImiGet(typeId))
-        module.ops.push(new ImiGet(baseId))
-        indexes.forEach(i => {
-          module.ops.push(new ImiGet(i))
-          module.ops.push(new ImiGetIndex())
-        })
-        module.ops.push(new ImiPut(resultId))
-        console.debug(`$${resultId} = OpAccessChain $${typeId} $${baseId} ${indexes}`)
-        state.processed = true
-      }
-      break
-  }
 }

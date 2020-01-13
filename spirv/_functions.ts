@@ -18,25 +18,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpFunction
     case 54:
       {
-        let returnTypeId = state.consumeWord()
-        let resultId = state.consumeWord()
-        let functionControl = state.consumeWord()
-        let functionTypeId = state.consumeWord()
-
-        module.flow.push((execution: Execution) => {
-          let returnType = execution.get(returnTypeId) as Type
-          let functionType = execution.get(functionTypeId) as Type
-          execution.put(resultId, {
-            functionType,
-            returnType,
-            functionControl,
-            body: []
-          })
-          execution.inFunction = resultId
-        })
-        module.ops.push(new ImiFunction(returnTypeId, functionTypeId, functionControl))
-        module.ops.push(new ImiPut(resultId))
-        console.debug(`$${resultId} = OpFunction $${functionTypeId} $${returnTypeId} ${functionControl}`)
+        
         state.processed = true
       }
       break
@@ -57,10 +39,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpFunctionEnd
     case 56:
       {
-        console.debug(`FunctionEnd`)
-        module.flow.push(new FunctionEnd())
-        module.ops.push(new ImiFunctionEnd())
-        state.processed = true
+        
       }
       break
         // OpFunctionCall

@@ -33,10 +33,15 @@ export default class KQueue implements GPUQueue {
   constructor (private _errorReporter: ErrorReporter) {}
 
   createFence (descriptor: GPUFenceDescriptor = {}): GPUFence {
-    return new KFence(descriptor)
+    return new KFence(descriptor, this._errorReporter)
   }
 
   signal (fence: KFence, signalValue: number) {
+    if (this._errorReporter.validation()) {
+      if (signalValue <= (fence._value ?? 0)) {
+        this._errorReporter.createValidationError('Signaled value is less or equal than the current value.')
+      }
+    }
     fence._value = signalValue
   }
 
@@ -46,7 +51,7 @@ export default class KQueue implements GPUQueue {
       this._working = true
       setTimeout(() => this._executeBuffers(), 1)
     } else {
-      this._buffers = this._buffers.concat(buffers)
+      //this._buffers = this._buffers.concat(buffers)
     }
   }
 
@@ -447,4 +452,5 @@ function clear (texture: KTexture, color: GPUColor) {
       }
     }
   }
+  texture._flush()
 }

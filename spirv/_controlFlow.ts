@@ -6,8 +6,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
   switch (state.opCode) {
         // OpReturn
     case 253:
-      console.debug('OpReturn')
-      module.ops.push(new ImiReturn())
+      
       state.processed = true
       break
         // OpReturnValue
@@ -22,11 +21,7 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpLabel
     case 248:
       {
-        let resultId = state.consumeWord()
-        module.flow.push((execution: Execution) => {
-          execution.put(resultId, 'noidea')
-        })
-        console.debug(`$${resultId} = OpLabel`)
+        
         state.processed = true
       }
       break

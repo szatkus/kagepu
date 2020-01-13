@@ -15,7 +15,7 @@ export class KUncapturedErrorEvent {
   }
 }
 
-class OperationError extends Error {
+export class KOperationError extends Error {
   constructor (message: string) {
     super(message)
     this.name = 'OperationError'
@@ -58,7 +58,7 @@ export class ErrorReporter {
     let [errorScope, exceptedClass] = this.popScopeInformations()
     return new Promise((resolve, reject) => {
       if (!errorScope) {
-        reject(new OperationError('No scopes.'))
+        reject(new KOperationError('No scopes.'))
       }
       if (!exceptedClass) {
         resolve(null)

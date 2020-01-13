@@ -1,13 +1,13 @@
-import { Memory, InputMemory, Pointer, ConstantMemory } from './memory'
+import { Memory, InputMemory, Pointer, ConstantMemory } from './_memory'
 import dontKnow from './dontKnow'
 import { CompiledModule, compile } from './compilation'
 import { VertexInputs } from '../webgpu/KQueue'
-import { FunctionDeclaration, FunctionEnd } from './functions'
-import { Decorations, Binding, DescriptorSet } from './annotations'
-import { KBindGroup, KBindGroupLayout } from '../webgpu/bindGroups'
+import { FunctionDeclaration, FunctionEnd } from './_functions'
+import { KBindGroupLayout } from '../webgpu/bindGroups'
 import { Type } from './types'
 import { KShaderModule } from '../webgpu/shaders'
 import { KBuffer } from '../webgpu/buffers'
+import { Decorations, Binding, DescriptorSet } from './decorations'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -176,6 +176,6 @@ export function executeShader (vertexStage: GPUProgrammableStageDescriptor, inpu
   let inputMemory = new InputMemory(inputs, compiled.decorations)
   let storageBuffer = new StorageBufferMemory(inputs, compiled.decorations)
   let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
-  Execution.start(inputMemory, outputMemory, storageBuffer, compiled, vertexStage.entryPoint)
+  //Execution.start(inputMemory, outputMemory, storageBuffer, compiled, vertexStage.entryPoint)
   return outputMemory.float32View
 }

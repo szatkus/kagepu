@@ -4,7 +4,7 @@ import compiler from '../compiler'
 import { ImiString, ImiPut } from '../../imi'
 import { TypeVector, TypeFloat } from '../types'
 import dontKnow from '../../imi/dontKnow'
-import { Pointer, Memory } from '../memory'
+import { Pointer, Memory } from '../_memory'
 
 compiler.addInstruction(11, (state: CompilationState, module: CompiledModule) => {
   let resultTypeId = state.consumeWord()
@@ -34,5 +34,6 @@ compiler.addInstruction(11, (state: CompilationState, module: CompiledModule) =>
     }
     dontKnow()
   })
+  dontKnow()
   console.debug(`OpExtInstImport ${name}`)
 })

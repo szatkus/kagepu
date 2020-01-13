@@ -14,19 +14,14 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpName
     case 5:
       {
-        let targetId = state.consumeWord()
-        module.names[targetId] = state.consumeString()
-        console.debug(`$${targetId} OpName  ` + module.names[targetId].toString())
+        
         state.processed = true
       }
       break
         // OpMemberName
     case 6:
       {
-        let typeId = state.consumeWord()
-        let memberNumber = state.consumeWord()
-        let name = state.consumeString()
-        console.debug(`OpMemberName ${name} ${typeId}`)
+        
         state.processed = true
       }
       break

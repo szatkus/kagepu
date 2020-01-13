@@ -2,6 +2,7 @@ import { KTexture, KTextureView } from './textures'
 
 export class Context2DTexture implements KTexture {
   private _imageData?: ImageData
+  private _imageDataView?: Uint32Array
   private _destored = false
   public label = 'texture'
 
@@ -57,10 +58,12 @@ export class Context2DTexture implements KTexture {
     return 32
   }
 
-  _putPixel (pixel: number, x: number, y: number, z: number): void {
-    let imageData = new ImageData(1, 1)
-    new Uint32Array(imageData.data.buffer)[0] = pixel
-    this._context.putImageData(imageData, x, y)
+  _putPixel (pixel: number, x: number, y: number): void {
+    if (!this._imageData) {
+      this._imageData = this._context.getImageData(0, 0, this._getWidth(), this._getHeight())
+      this._imageDataView = new Uint32Array(this._imageData.data)
+    }
+    this._imageDataView![x + y * this._imageData.width] = pixel
   }
 
   _getPixel (x: number, y: number, z: number, arrayLevel: number, mipLevel: number): number {
@@ -76,6 +79,8 @@ export class Context2DTexture implements KTexture {
   _flush () {
     if (this._imageData) {
       this._context.putImageData(this._imageData, 0, 0)
+      delete this._imageData
+      delete this._imageDataView
     }
   }
 }
