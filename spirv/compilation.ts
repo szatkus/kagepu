@@ -81,8 +81,7 @@ export function compile (code: CodeStream) {
       state.startPos = state.pos
       state.endPos = state.startPos + state.wordCount
       state.pos++
-      state.processed = false
-
+      let imiOps = module.ops.length
             // instructions are grouped in the same way as in the specification
             // https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.html#_a_id_instructions_a_instructions
       debugCompile(state, module)
@@ -104,7 +103,7 @@ export function compile (code: CodeStream) {
       }
 
             // processing an instruction should change state of the program counter, otherwise it means that instruction is not supported
-      if (!state.processed) {
+      if (imiOps >= module.ops.length) {
         console.debug(code[state.pos])
         console.debug(code[state.pos + 1])
         console.debug(code[state.pos + 2])
