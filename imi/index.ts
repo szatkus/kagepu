@@ -17,10 +17,6 @@ export class ImiString extends ImiOp {
     super()
   }
 
-  emit (stack: any[]) {
-    stack.push(this.value)
-  }
-
   execute (stack: any[], globals: any[]) {
     stack.push(this.value)
     return []
@@ -32,6 +28,8 @@ export class ImiObject extends ImiOp {
   constructor (public value: any) {
     super()
   }
+
+  
 }
 
 export class ImiConstant extends ImiOp {
@@ -46,7 +44,7 @@ export class ImiConstant extends ImiOp {
       type
     })
     return []
-}
+  }
 }
 
 export class ImiComposite extends ImiOp {
@@ -64,10 +62,6 @@ export class ImiNumber extends ImiOp {
     super()
   }
 
-  emit (stack: any[]) {
-    this.execute(stack)
-  }
-
   execute (stack: any[]) {
     stack.push(this.value)
     return []
@@ -77,10 +71,6 @@ export class ImiNumber extends ImiOp {
 export class ImiBoolean extends ImiOp {
   constructor (public value: boolean) {
     super()
-  }
-
-  emit (stack: any[]) {
-    this.execute(stack)
   }
 
   execute (stack: any[]) {
@@ -171,22 +161,6 @@ export class ImiPointerType extends ImiOp {
   }
 }
 
-class Memory {}
-
-class GlobalMemory implements Memory {}
-
-class BindedResource implements Memory {
-  constructor (public descriptorSet: number, public bindingGroup: number) {
-
-  }
-}
-
-interface Variable {
-  memory: Memory,
-  offset: number,
-  type: Type
-}
-
 export class ImiCreateVariable extends ImiOp {
   constructor (public storageClass: number, public resultId: number) {
     super()
@@ -229,7 +203,6 @@ export class ImiGetIndex extends ImiOp {
       dontKnow()
     }
     stack.push({
-      memory: pointer.memory,
       offset: pointer.offset,
       type: struct.members[0]
     })
@@ -341,7 +314,17 @@ interface Instruction {
   arg?: number[] | Variable
 }
 
+interface Variable {
+  descriptorSet?: number,
+  binding?: number,
+  storageClass: number,
+  offset: number,
+  type: Type
+}
+
 class MemoryAllocator {
+  private offset = 0
+
   constructor (private module: CompiledModule, private inputs: VertexInputs) {
 
   }
@@ -350,53 +333,25 @@ class MemoryAllocator {
       let descriptorSet: DescriptorSet = this.module.decorations.getSingleDecoration(resultId, DescriptorSet)
       let binding: Binding = this.module.decorations.getSingleDecoration(resultId, Binding)
       return {
-        memory: new BindedResource(descriptorSet.value, binding.value),
+        descriptorSet: descriptorSet.value,
+        binding: binding.value,
         offset: 0,
+        storageClass,
         type
       }
     }
-    if (storageClass === 0) {
-      let offset = this.offsets[storageClass]
-      this.offsets[storageClass] += type.getSize()
+    if (storageClass === 0 || storageClass === 3) {
+      let offset = this.offset
+      this.offset += type.getSize()
       return {
-        memory: new GlobalMemory(),
         offset: offset,
+        storageClass,
         type
       }
     }
-    dontKnow()
-    return {} as Variable
+    return dontKnow()
   }
-  getUnifiedOffset (variable: Variable): number {
-    if (variable.memory instanceof GlobalMemory) {
-      return variable.offset
-    }
-    let offset = this.offsets[0]
-    if (offset % 4 !== 0) {
-      offset += 4 - offset % 4
-    }
-    if (variable.memory instanceof BindedResource) {
-      dontKnow()
-    //   this.inputs.bindGroups.forEach((value, set) => {
-    //     value.descriptor.bindings.forEach((value: KBindGroup) => {
-    //       if (variable.memory instanceof BindedResource && set <= variable.memory.descriptorSet && value.binding < variable.memory.bindingGroup) {
-    //         if (value.resource instanceof GPUSampler) {
-    //           return
-    //         }
-    //         let bufferBinding = value.resource as GPUBufferBinding
-    //         if (bufferBinding.size) {
-    //           offset += bufferBinding.size
-    //           return
-    //         }
-    //         dontKnow()
-    //       }
-    //     })
-    //   })
-    //   return offset
-    }
-    return -1
-  }
-  offsets = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 }
 
 export function imiToWasm (module: CompiledModule, entryPoint: string, inputs: VertexInputs): WebAssembly.Module {
@@ -434,14 +389,14 @@ export function imiToWasm (module: CompiledModule, entryPoint: string, inputs: V
             return [instruction.code].concat(instruction.arg as number[])
         }
         if (instruction.code === I32_STORE) {
-            let offset = allocator.getUnifiedOffset(instruction.arg as Variable)
+            let offset = (instruction.arg as Variable).offset
             return [LOCAL_SET].concat(toUint32(swapLocal))
                 .concat([I32_CONST]).concat(toUint32(offset))
                 .concat([LOCAL_GET]).concat(toUint32(swapLocal))
                 .concat([instruction.code]).concat(toUint32(1)).concat(toUint32(0))
         }
         if (instruction.code === I32_LOAD) {
-            let offset = allocator.getUnifiedOffset(instruction.arg as Variable)
+          let offset = (instruction.arg as Variable).offset
             return [I32_CONST].concat(toUint32(offset))
                 .concat([instruction.code]).concat(toUint32(1)).concat(toUint32(0))
         }
