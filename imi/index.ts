@@ -38,6 +38,15 @@ export class ImiConstant extends ImiOp {
   constructor (public value: any) {
     super()
   }
+
+  execute (stack: any[]) {
+    let type = stack.pop() as Type
+    stack.push({
+      value: this.value,
+      type
+    })
+    return []
+}
 }
 
 export class ImiComposite extends ImiOp {
