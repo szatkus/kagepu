@@ -8,6 +8,7 @@ import { Type } from './types'
 import { KShaderModule } from '../webgpu/shaders'
 import { KBuffer } from '../webgpu/buffers'
 import { Decorations, Binding, DescriptorSet } from './decorations'
+import { imiToWasm } from '../imi'
 
 let functionMemoryPool: Memory[] = []
 let globalMemoryPool: Memory[] = []
@@ -172,6 +173,7 @@ export function executeShader (vertexStage: GPUProgrammableStageDescriptor, inpu
   if (compiled === undefined) {
     compiled = compile(code)
     shaderModule._compiled = compiled
+    imiToWasm(compiled, vertexStage.entryPoint, inputs)
   }
   let inputMemory = new InputMemory(inputs, compiled.decorations)
   let storageBuffer = new StorageBufferMemory(inputs, compiled.decorations)

@@ -29,7 +29,6 @@ export class ImiObject extends ImiOp {
     super()
   }
 
-  
 }
 
 export class ImiConstant extends ImiOp {
@@ -51,10 +50,24 @@ export class ImiComposite extends ImiOp {
   constructor () {
     super()
   }
+
+  execute (stack: any[]) {
+    let type = stack.pop() as Type
+    stack.push({
+      type,
+      values: []
+    })
+    return []
+  }
 }
 
 export class ImiLabel extends ImiOp {
-
+  execute (stack: any[]) {
+    return [{
+      code: BLOCK,
+      arg: NOTYPE
+    }]
+  }
 }
 
 export class ImiNumber extends ImiOp {
@@ -212,8 +225,14 @@ export class ImiGetIndex extends ImiOp {
 }
 
 export class ImiSetIndex extends ImiOp {
-  
-
+  execute (stack: any[]) {
+    let value = stack.pop()
+    let index = stack.pop()
+    let object = stack.pop()
+    object.values[index] = value
+    stack.push(object)
+    return []
+  }
 }
 
 export class ImiSwap extends ImiOp {
@@ -292,6 +311,8 @@ export class ImiNop extends ImiOp {
   }
 }
 
+const BLOCK = 0x02
+const NOTYPE = 0x40
 const INT32 = 0x7f
 const LOCAL_GET = 0x20
 const LOCAL_SET = 0x21
@@ -311,7 +332,7 @@ function toUint32 (value: number): number[] {
 
 interface Instruction {
   code: number,
-  arg?: number[] | Variable
+  arg?: number[] | Variable | number
 }
 
 interface Variable {
@@ -340,7 +361,7 @@ class MemoryAllocator {
         type
       }
     }
-    if (storageClass === 0 || storageClass === 3) {
+    if (storageClass === 0 || storageClass === 1 || storageClass === 3) {
       let offset = this.offset
       this.offset += type.getSize()
       return {
