@@ -1,4 +1,4 @@
-import { Type, TypeInt, TypeStruct } from '../spirv/types'
+import { Type, TypeInt, TypeStruct, TypeArray, TypeVector } from '../spirv/types'
 import { CompiledModule } from '../spirv/compilation'
 import dontKnow from './dontKnow'
 import { DescriptorSet, Binding } from '../spirv/decorations'
@@ -211,15 +211,26 @@ export class ImiGetIndex extends ImiOp {
   execute (stack: any[], globals: any[]) {
     let index = stack.pop()
     let pointer = stack.pop() as Variable
-    let struct = pointer.type as TypeStruct
-    if (struct.members.length > 1) {
-      dontKnow()
+    let type = pointer.type
+    if (type instanceof TypeStruct) {
+      let offset = 0
+      for (let i = 0; i < index; i++) {
+        offset += type.members[i].getSize()
+      }
+      stack.push({
+        offset: offset,
+        type: type.members[index]
+      })
+      return []
     }
-    stack.push({
-      offset: pointer.offset,
-      type: struct.members[0]
-    })
-    return []
+    if (type instanceof TypeArray || type instanceof TypeVector) {
+      stack.push({
+        offset: pointer.offset + index * type.getSize(),
+        type: type.type
+      })
+      return []
+    }
+    return dontKnow()
   }
 
 }
@@ -295,13 +306,17 @@ export class ImiStore extends ImiOp {
 
 export class ImiReturn extends ImiOp {
   execute (stack: any[], globals: any[]) {
-    return []
+    return [{
+      code: RETURN
+    }]
   }
 }
 
 export class ImiFunctionEnd extends ImiOp {
   execute (stack: any[], globals: any[]) {
-    return []
+    return [{
+      code: END
+    }]
   }
 }
 
@@ -312,6 +327,7 @@ export class ImiNop extends ImiOp {
 }
 
 const BLOCK = 0x02
+const END = 0x0B
 const NOTYPE = 0x40
 const INT32 = 0x7f
 const LOCAL_GET = 0x20
@@ -345,10 +361,17 @@ interface Variable {
 
 class MemoryAllocator {
   private offset = 0
+  private functions: number[] = []
+  private currentFunction = 0
 
   constructor (private module: CompiledModule, private inputs: VertexInputs) {
 
   }
+
+  setFunction (id: number) {
+    this.currentFunction = id
+  }
+
   allocate (storageClass: number, type: Type, resultId: ImiId): Variable {
     if (storageClass === 12) {
       let descriptorSet: DescriptorSet = this.module.decorations.getSingleDecoration(resultId, DescriptorSet)
@@ -366,6 +389,15 @@ class MemoryAllocator {
       this.offset += type.getSize()
       return {
         offset: offset,
+        storageClass,
+        type
+      }
+    }
+    if (storageClass === 7) {
+      let offset = this.functions[this.currentFunction]
+      this.functions[this.currentFunction] += type.getSize()
+      return {
+        offset,
         storageClass,
         type
       }
@@ -420,6 +452,15 @@ export function imiToWasm (module: CompiledModule, entryPoint: string, inputs: V
           let offset = (instruction.arg as Variable).offset
             return [I32_CONST].concat(toUint32(offset))
                 .concat([instruction.code]).concat(toUint32(1)).concat(toUint32(0))
+        }
+        if (instruction.code === BLOCK) {
+          return [BLOCK, instruction.arg as number]
+        }
+        if (instruction.code === RETURN) {
+          return [RETURN]
+        }
+        if (instruction.code === END) {
+          return [END]
         }
         dontKnow()
         return []
