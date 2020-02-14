@@ -18,7 +18,6 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpFunction
     case 54:
       {
-        
         state.processed = true
       }
       break
@@ -39,7 +38,6 @@ export function compile (state: CompilationState, module: CompiledModule) {
         // OpFunctionEnd
     case 56:
       {
-        
       }
       break
         // OpFunctionCall

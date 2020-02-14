@@ -35,7 +35,7 @@ export class Context2DTexture implements KTexture {
     return false
   }
 
-  _isValid(): boolean {
+  _isValid (): boolean {
     return true
   }
 

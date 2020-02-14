@@ -26,6 +26,6 @@ compiler.addInstruction(28, (state: CompilationState, module: CompiledModule) =>
   module.ops.push(new ImiNumber(count))
   module.ops.push(new ImiType(TypeArray))
   module.ops.push(new ImiPut(resultId))
-  
+
   console.debug(`$${resultId} = OpTypeArray $${typeId} ${count}`)
 })

@@ -51,7 +51,7 @@ export default class KQueue implements GPUQueue {
       this._working = true
       setTimeout(() => this._executeBuffers(), 1)
     } else {
-      //this._buffers = this._buffers.concat(buffers)
+      // this._buffers = this._buffers.concat(buffers)
     }
   }
 

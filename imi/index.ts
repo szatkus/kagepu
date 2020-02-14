@@ -246,10 +246,7 @@ export class ImiSetIndex extends ImiOp {
   }
 }
 
-export class ImiSwap extends ImiOp {
-  
-
-}
+export class ImiSwap extends ImiOp {}
 
 export class ImiPointerWrite extends ImiOp {
 

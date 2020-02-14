@@ -178,6 +178,6 @@ export function executeShader (vertexStage: GPUProgrammableStageDescriptor, inpu
   let inputMemory = new InputMemory(inputs, compiled.decorations)
   let storageBuffer = new StorageBufferMemory(inputs, compiled.decorations)
   let outputMemory = new Memory(new ArrayBuffer(1024 * 4))
-  //Execution.start(inputMemory, outputMemory, storageBuffer, compiled, vertexStage.entryPoint)
+  // Execution.start(inputMemory, outputMemory, storageBuffer, compiled, vertexStage.entryPoint)
   return outputMemory.float32View
 }
