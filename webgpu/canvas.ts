@@ -35,6 +35,10 @@ export class Context2DTexture implements KTexture {
     return false
   }
 
+  _isValid(): boolean {
+    return true
+  }
+
   _getFormat (): GPUTextureFormat {
     return 'r8unorm'
   }

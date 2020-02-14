@@ -15,14 +15,14 @@ To inject kagepu into existing WebGPU code you should declare these things in HT
   </script>
 ```
 
-In the current state the library should work in most modern browsers (maybe even in IE).
+In the current state the library should work in most modern browsers.
 
 **Progress**:
  - most of WebGPU interfaces are at least stubbed
  - basic implementation of SPIR-V interpreter
  - it can draw a triangle (with horrible performance)
  - simple compute
- - some tests from the Conformance Test Suite pass (290/425)
+ - some tests from the Conformance Test Suite pass (565/790)
  - not much else
 
 WSL or MSL isn't supported, just pure SPIR-V, so you better use GLSlang.

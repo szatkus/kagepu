@@ -9,6 +9,7 @@ export const KTextureUsage = {
 }
 
 export interface KTexture extends GPUTexture {
+  _isValid (): boolean
   _getFormat (): GPUTextureFormat
   _getPixelSize (): number,
   _putPixel (pixel: number, x: number, y: number, z: number, arrayLevel: number, mipLevel: number): void
@@ -135,6 +136,21 @@ export class KBufferTexture implements KTexture {
     return !!(this._descriptor.usage & KTextureUsage.SAMPLED)
   }
 
+  _isValid (): boolean {
+    if (this._getArrayLayerCount() !== 1) {
+      return false
+    }
+    if (this._size.width < 1) {
+      return false
+    }
+    if (this._size.height < 1) {
+      return false
+    }
+    if (this._size.depth < 1) {
+      return false
+    }
+    return true
+  }
   _isStorage (): boolean {
     return !!(this._descriptor.usage & KTextureUsage.STORAGE)
   }
@@ -257,6 +273,9 @@ export class KTextureView implements GPUTextureView {
     return this._texture._isStorage()
   }
 
+  _isValid (): boolean {
+    return this._texture._isValid()
+  }
   _getFormat (): GPUTextureFormat {
     return this._texture._getFormat()
   }

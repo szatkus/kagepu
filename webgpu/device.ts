@@ -81,7 +81,7 @@ export class GPUDevice {
   }
 
   createSampler (descriptor: GPUSamplerDescriptor): GPUSampler {
-    return new KSampler()
+    return new KSampler(descriptor)
   }
 
   createBindGroupLayout (descriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
@@ -237,6 +237,9 @@ export class GPUDevice {
           if (bindingLayout.type !== 'sampler') {
             this._errorReporter.createValidationError('Sampler is not a correct type.')
           }
+          if (!binding.resource._isValid()) {
+            this._errorReporter.createValidationError('Sampler is invalid.')
+          }
         }
         if (binding.resource instanceof KTextureView && bindingLayout) {
           if (bindingLayout.type === 'sampled-texture' && !binding.resource._isSampled()) {
@@ -253,8 +256,8 @@ export class GPUDevice {
               (bindingLayout.textureComponentType === 'uint' && binding.resource._getFormat().indexOf('r8uint') === -1)) {
             this._errorReporter.createValidationError('Incorrect format.')
           }
-          if (binding.resource._texture._getArrayLayerCount() !== 1) {
-            this._errorReporter.createValidationError('Incorrect dimensions.')
+          if (!binding.resource._isValid()) {
+            this._errorReporter.createValidationError('Texture is invalid.')
           }
         }
       }
