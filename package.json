@@ -5,7 +5,7 @@
     "@types/mocha": "^5.2.6",
     "@webgpu/types": "0.0.21",
     "chai": "^4.2.0",
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "standard": "^14.3.1",
     "ts-loader": "^6.0.4",
     "ts-node": "^8.0.3",
